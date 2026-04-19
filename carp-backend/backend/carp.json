@@ -1,0 +1,33 @@
+{
+  "users": [
+    {
+      "id": 1776633015837,
+      "name": "Test User",
+      "email": "test@example.com",
+      "password": "$2a$12$T.crTBcuabDalUl67GMRV.ngfZA3FPiJm280T8lY/5wngf7z3eANa",
+      "avatar": null,
+      "auth_provider": "local",
+      "google_id": null,
+      "city": null,
+      "country": null,
+      "created_at": "2026-04-19T21:10:15.837Z"
+    }
+  ],
+  "refreshTokens": [
+    {
+      "id": 1776633015868,
+      "user_id": 1776633015837,
+      "token": "28de9c165dd452323e663f7214bf2d7d9cd4686bcdefb3ca2a387fff60419a6cb110c4e62fbadb666e12050ff260abc17c73ca57cfee820414b07fdf45dd7428",
+      "expires_at": "2026-05-19T21:10:15.868Z",
+      "created_at": "2026-04-19T21:10:15.868Z"
+    },
+    {
+      "id": 1776633023680,
+      "user_id": 1776633015837,
+      "token": "de48806b87f4e2396aed4d1850d07759dfa88d3c05970876052cc3ab38463706870f14bf2df43dc8bf7e06dbc7fb3b33ac6d9e57c0fe81e12f9914cf7ec6f184",
+      "expires_at": "2026-05-19T21:10:23.680Z",
+      "created_at": "2026-04-19T21:10:23.680Z"
+    }
+  ],
+  "savedCities": []
+}

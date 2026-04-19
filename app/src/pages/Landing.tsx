@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Shield, BarChart3, Newspaper, MapPin, Sparkles } from 'lucide-react';
 import CarpLogo from '@/components/CarpLogo';
 import Footer from '@/components/Footer';
+import VideoBackground from '@/components/VideoBackground';
 
 export default function Landing() {
   const [fade, setFade] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setFade(true), 100);
@@ -22,26 +22,10 @@ export default function Landing() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden" style={{ background: '#0a0e1a' }}>
-      {/* Video Background */}
-      <div className="absolute inset-0 z-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="h-full w-full object-cover"
-          style={{ opacity: 0.85 }}
-        >
-          <source src="./videos/clouds.mp4" type="video/mp4" />
-        </video>
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(10,10,15,0.55) 0%, rgba(10,10,15,0.40) 40%, rgba(10,10,15,0.60) 100%)' }} />
-        {/* Subtle radial glow */}
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 30%, rgba(234,157,99,0.08) 0%, transparent 60%)' }} />
-      </div>
+      {/* ===== VIDEO BACKGROUND ===== */}
+      <VideoBackground opacity={0.7} />
 
-      {/* Main Content */}
+      {/* ===== MAIN CONTENT ===== */}
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-16">
         <div className="mx-auto w-full max-w-6xl text-center">
           {/* Glass Card */}
@@ -59,12 +43,18 @@ export default function Landing() {
             >
               {/* Logo */}
               <div className="mb-5 flex flex-col items-center gap-3">
-                <CarpLogo size={64} className="drop-shadow-[0_0_20px_rgba(234,157,99,0.3)]" />
+                <CarpLogo size={80} className="drop-shadow-[0_0_24px_rgba(234,157,99,0.35)]" />
                 <div>
-                  <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: '#EAEFEF', letterSpacing: '-0.03em' }}>
+                  <h1
+                    className="text-4xl font-extrabold tracking-tight"
+                    style={{ color: '#EAEFEF', letterSpacing: '-0.03em' }}
+                  >
                     CARP
                   </h1>
-                  <p className="mt-1 text-sm font-medium tracking-wide" style={{ color: '#9a9da8' }}>
+                  <p
+                    className="mt-1 text-sm font-medium tracking-wide"
+                    style={{ color: '#9a9da8' }}
+                  >
                     Climate &amp; Air Research Platform
                   </p>
                 </div>
@@ -95,27 +85,44 @@ export default function Landing() {
           </div>
 
           {/* Feature Cards */}
-          <div className={`mx-auto mt-10 grid max-w-4xl gap-4 transition-all delay-300 duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+          <div
+            className={`mx-auto mt-10 grid max-w-4xl gap-4 transition-all delay-300 duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+          >
             {features.map((f) => (
               <div
                 key={f.title}
                 className="tile text-left"
-                style={{ background: 'rgba(20,20,30,0.50)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.10)' }}
+                style={{
+                  background: 'rgba(20,20,30,0.50)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.10)',
+                }}
               >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: 'rgba(234,157,99,0.10)' }}>
+                <div
+                  className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: 'rgba(234,157,99,0.10)' }}
+                >
                   <f.icon className="h-5 w-5" style={{ color: '#EA9D63' }} />
                 </div>
-                <h3 className="mb-1 text-sm font-bold" style={{ color: '#EAEFEF' }}>{f.title}</h3>
-                <p className="text-xs leading-relaxed" style={{ color: '#9a9da8' }}>{f.desc}</p>
+                <h3 className="mb-1 text-sm font-bold" style={{ color: '#EAEFEF' }}>
+                  {f.title}
+                </h3>
+                <p className="text-xs leading-relaxed" style={{ color: '#9a9da8' }}>
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
 
           {/* Credits */}
-          <div className={`mt-8 transition-all delay-500 duration-1000 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+          <div
+            className={`mt-8 transition-all delay-500 duration-1000 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+          >
             <div className="flex items-center justify-center gap-2 text-xs" style={{ color: '#6b6f7a' }}>
               <Sparkles className="h-3 w-3" style={{ color: '#EA9D63' }} />
-              <span>Complete Philippine city coverage &middot; Global weather monitoring &middot; AI-powered insights</span>
+              <span className="break-words">
+                Complete Philippine city coverage &middot; Global weather monitoring &middot; AI-powered insights
+              </span>
             </div>
           </div>
         </div>

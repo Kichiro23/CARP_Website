@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router';
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import Layout from '@/components/Layout';
@@ -21,6 +22,10 @@ import Security from '@/pages/Security';
 export default function App() {
   const { theme, toggleTheme } = useTheme();
   const auth = useAuth();
+
+  useEffect(() => {
+    auth.checkAuth();
+  }, []);
 
   return (
     <Routes>

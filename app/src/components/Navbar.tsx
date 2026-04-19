@@ -16,8 +16,13 @@ const navLinks = [
   { path: '/about', label: 'About' },
 ];
 
-export default function Navbar({ theme, toggleTheme, auth }: {
-  theme: Theme; toggleTheme: () => void;
+export default function Navbar({
+  theme,
+  toggleTheme,
+  auth,
+}: {
+  theme: Theme;
+  toggleTheme: () => void;
   auth: { user: UserType | null; logout: () => void };
 }) {
   const loc = useLocation();
@@ -33,13 +38,13 @@ export default function Navbar({ theme, toggleTheme, auth }: {
         style={{
           height: '60px',
           minHeight: '60px',
-          background: isDark ? 'rgba(10,10,18,0.88)' : 'rgba(240,242,247,0.88)',
+          background: isDark ? 'rgba(10,10,18,0.92)' : 'rgba(240,242,247,0.92)',
           backdropFilter: 'blur(24px) saturate(1.6)',
           WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
           borderBottom: '1px solid var(--tile-border)',
         }}
       >
-        {/* Left: Logo + Hamburger */}
+        {/* Left: Hamburger + Logo */}
         <div className="flex items-center gap-2.5 shrink-0 min-w-0">
           <button
             className="md:hidden p-2 rounded-lg transition-colors shrink-0"
@@ -48,15 +53,23 @@ export default function Navbar({ theme, toggleTheme, auth }: {
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
-            <CarpLogo size={30} />
-            <span className="text-base font-bold tracking-tight truncate hidden sm:inline" style={{ color: 'var(--primary)' }}>CARP</span>
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2.5 shrink-0 min-w-0 overflow-hidden"
+          >
+            <CarpLogo size={32} className="shrink-0" />
+            <span
+              className="text-base font-bold tracking-tight truncate hidden sm:inline"
+              style={{ color: 'var(--primary)' }}
+            >
+              CARP
+            </span>
           </Link>
         </div>
 
         {/* Center: Desktop Nav */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center min-w-0 overflow-hidden">
-          {navLinks.map(l => {
+          {navLinks.map((l) => {
             const active = loc.pathname === l.path;
             return (
               <Link
@@ -69,7 +82,12 @@ export default function Navbar({ theme, toggleTheme, auth }: {
                 }}
               >
                 {l.label}
-                {active && <span className="block h-0.5 mt-0.5 mx-auto rounded-full" style={{ width: '60%', background: '#EA9D63' }} />}
+                {active && (
+                  <span
+                    className="block h-0.5 mt-0.5 mx-auto rounded-full"
+                    style={{ width: '60%', background: '#EA9D63' }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -88,15 +106,22 @@ export default function Navbar({ theme, toggleTheme, auth }: {
           <div className="relative">
             <button
               onClick={() => setDdOpen(!ddOpen)}
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl transition-all min-w-0"
+              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl transition-all min-w-0 overflow-hidden"
             >
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shrink-0"
-                style={{ background: 'linear-gradient(135deg, #EA9D63, #d48952)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #EA9D63, #d48952)',
+                }}
               >
                 {auth.user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <span className="hidden sm:inline text-sm font-semibold truncate max-w-[80px] lg:max-w-[120px]" style={{ color: 'var(--text)' }}>
+              {/* Username with strict truncation to prevent overlap */}
+              <span
+                className="hidden sm:inline text-sm font-semibold truncate max-w-[60px] lg:max-w-[100px]"
+                style={{ color: 'var(--text)' }}
+                title={auth.user?.name || 'User'}
+              >
                 {auth.user?.name?.split(' ')[0] || 'User'}
               </span>
             </button>
@@ -110,18 +135,60 @@ export default function Navbar({ theme, toggleTheme, auth }: {
                   borderColor: 'var(--tile-border)',
                 }}
               >
-                <Link to="/profile" onClick={() => setDdOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors" style={{ color: 'var(--text)' }}>
-                  <User className="h-4 w-4" style={{ color: 'var(--primary)' }} /> Profile
+                {/* User info header */}
+                <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--tile-border)' }}>
+                  <p
+                    className="text-sm font-semibold truncate"
+                    style={{ color: 'var(--text)' }}
+                    title={auth.user?.name || 'User'}
+                  >
+                    {auth.user?.name || 'User'}
+                  </p>
+                  <p
+                    className="text-[11px] truncate"
+                    style={{ color: 'var(--text-muted)' }}
+                    title={auth.user?.email || ''}
+                  >
+                    {auth.user?.email || ''}
+                  </p>
+                </div>
+                <Link
+                  to="/profile"
+                  onClick={() => setDdOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors"
+                  style={{ color: 'var(--text)' }}
+                >
+                  <User className="h-4 w-4 shrink-0" style={{ color: 'var(--primary)' }} />{' '}
+                  <span className="truncate">Profile</span>
                 </Link>
-                <Link to="/settings" onClick={() => setDdOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors" style={{ color: 'var(--text)' }}>
-                  <Settings className="h-4 w-4" style={{ color: 'var(--primary)' }} /> Settings
+                <Link
+                  to="/settings"
+                  onClick={() => setDdOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors"
+                  style={{ color: 'var(--text)' }}
+                >
+                  <Settings className="h-4 w-4 shrink-0" style={{ color: 'var(--primary)' }} />{' '}
+                  <span className="truncate">Settings</span>
                 </Link>
-                <Link to="/security" onClick={() => setDdOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors" style={{ color: 'var(--text)' }}>
-                  <Shield className="h-4 w-4" style={{ color: 'var(--primary)' }} /> Security
+                <Link
+                  to="/security"
+                  onClick={() => setDdOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#EA9D63]/10 transition-colors"
+                  style={{ color: 'var(--text)' }}
+                >
+                  <Shield className="h-4 w-4 shrink-0" style={{ color: 'var(--primary)' }} />{' '}
+                  <span className="truncate">Security</span>
                 </Link>
                 <div className="h-px mx-4" style={{ background: 'var(--border)' }} />
-                <button onClick={() => { auth.logout(); nav('/'); setDdOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
-                  <LogOut className="h-4 w-4" /> Logout
+                <button
+                  onClick={() => {
+                    auth.logout();
+                    nav('/');
+                    setDdOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" /> <span className="truncate">Logout</span>
                 </button>
               </div>
             )}
@@ -138,12 +205,12 @@ export default function Navbar({ theme, toggleTheme, auth }: {
             backdropFilter: 'blur(24px)',
           }}
         >
-          {navLinks.map(l => (
+          {navLinks.map((l) => (
             <Link
               key={l.path}
               to={l.path}
               onClick={() => setMobileOpen(false)}
-              className="block py-3 text-sm font-medium border-b transition-colors"
+              className="block py-3 text-sm font-medium border-b transition-colors break-words"
               style={{
                 color: loc.pathname === l.path ? '#EA9D63' : 'var(--text-secondary)',
                 borderColor: 'var(--border)',

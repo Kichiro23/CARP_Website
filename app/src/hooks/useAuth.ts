@@ -1,86 +1,129 @@
 import { useState, useCallback } from 'react';
 import type { User, AuthState } from '@/types';
+import { loginUser, registerUser, googleLoginUser, logoutUser, getCurrentUser } from '@/services/api';
 
-const USERS_KEY = 'carp_users';
 const SESSION_KEY = 'carp_session';
+const TOKEN_KEY = 'carp_token';
+const REFRESH_KEY = 'carp_refresh';
 
-function getUsers(): User[] {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }
-  catch { return []; }
-}
-function saveUsers(users: User[]) { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
 function getSession(): User | null {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
   catch { return null; }
 }
-function saveSession(user: User | null) { localStorage.setItem(SESSION_KEY, JSON.stringify(user)); }
+
+function saveSession(user: User | null, token?: string, refreshToken?: string) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
+  if (!user) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  }
+}
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: getSession(), isAuthenticated: !!getSession() });
 
-  const login = useCallback((email: string, password: string): boolean => {
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    if (!user) return false;
-    saveSession(user);
-    setState({ user, isAuthenticated: true });
-    return true;
-  }, []);
-
-  const register = useCallback((name: string, email: string, password: string): boolean => {
-    const users = getUsers();
-    if (users.find(u => u.email === email)) return false;
-    const newUser: User = {
-      id: Date.now(),
-      name,
-      email,
-      password,
-      avatar: '',
-      authProvider: 'local',
-    };
-    users.push(newUser);
-    saveUsers(users);
-    saveSession(newUser);
-    setState({ user: newUser, isAuthenticated: true });
-    return true;
-  }, []);
-
-  const googleLogin = useCallback((googleData: { name: string; email: string; picture: string }): boolean => {
-    const users = getUsers();
-    let user = users.find(u => u.email === googleData.email);
-    if (!user) {
-      user = {
-        id: Date.now(),
-        name: googleData.name,
-        email: googleData.email,
-        password: '__google__' + Math.random().toString(36),
-        avatar: googleData.picture,
-        authProvider: 'google',
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    try {
+      const data = await loginUser(email, password);
+      const user: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatar || '',
+        authProvider: data.user.auth_provider,
       };
-      users.push(user);
-      saveUsers(users);
+      saveSession(user, data.token, data.refreshToken);
+      setState({ user, isAuthenticated: true });
+      return true;
+    } catch {
+      return false;
     }
-    saveSession(user);
-    setState({ user, isAuthenticated: true });
-    return true;
+  }, []);
+
+  const register = useCallback(async (name: string, email: string, password: string, city?: string, country?: string): Promise<boolean> => {
+    try {
+      const data = await registerUser(name, email, password, city, country);
+      const user: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatar || '',
+        authProvider: data.user.auth_provider,
+      };
+      saveSession(user, data.token, data.refreshToken);
+      setState({ user, isAuthenticated: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const googleLogin = useCallback(async (googleData: { googleId: string; name: string; email: string; picture?: string }): Promise<boolean> => {
+    try {
+      const data = await googleLoginUser(googleData.googleId, googleData.email, googleData.name, googleData.picture);
+      const user: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        avatar: data.user.avatar || '',
+        authProvider: data.user.auth_provider,
+      };
+      saveSession(user, data.token, data.refreshToken);
+      setState({ user, isAuthenticated: true });
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const logout = useCallback(() => {
+    const refreshToken = localStorage.getItem(REFRESH_KEY);
+    if (refreshToken) {
+      logoutUser(refreshToken).catch(() => {});
+    }
     saveSession(null);
     setState({ user: null, isAuthenticated: false });
   }, []);
 
-  const updateProfile = useCallback((updates: Partial<User>) => {
-    setState(prev => {
-      if (!prev.user) return prev;
-      const updated = { ...prev.user, ...updates };
-      saveSession(updated);
-      const users = getUsers();
-      const idx = users.findIndex(u => u.id === updated.id);
-      if (idx >= 0) { users[idx] = updated; saveUsers(users); }
-      return { ...prev, user: updated };
-    });
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    try {
+      // Optimistic update
+      setState(prev => {
+        if (!prev.user) return prev;
+        const updated = { ...prev.user, ...updates };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+        return { ...prev, user: updated };
+      });
+      // Could also sync with backend here
+    } catch {
+      // Rollback handled by state
+    }
   }, []);
 
-  return { ...state, login, register, googleLogin, logout, updateProfile };
+  // Check auth status on mount
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const data = await getCurrentUser();
+      if (data.user) {
+        const user: User = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          avatar: data.user.avatar || '',
+          authProvider: data.user.auth_provider,
+        };
+        saveSession(user);
+        setState({ user, isAuthenticated: true });
+      }
+    } catch {
+      saveSession(null);
+      setState({ user: null, isAuthenticated: false });
+    }
+  }, []);
+
+  return { ...state, login, register, googleLogin, logout, updateProfile, checkAuth };
 }

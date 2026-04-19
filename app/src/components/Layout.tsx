@@ -2,7 +2,7 @@ import { Outlet } from 'react-router';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import AIAssistant from './AIAssistant';
-import AnimatedBackground from './AnimatedBackground';
+import VideoBackground from './VideoBackground';
 import type { Theme, User } from '@/types';
 
 interface Props {
@@ -14,8 +14,8 @@ interface Props {
 export default function Layout({ theme, toggleTheme, auth }: Props) {
   return (
     <div className="relative flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
-      {/* Global animated background */}
-      <AnimatedBackground />
+      {/* Global video background */}
+      <VideoBackground opacity={0.35} />
 
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         <Navbar theme={theme} toggleTheme={toggleTheme} auth={auth} />

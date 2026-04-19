@@ -44,17 +44,17 @@ export default function Compare() {
     <div className="space-y-4">
       <div><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Compare</h1><p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>Compare weather between two cities</p></div>
 
-      <div className="tile flex flex-col items-end gap-3 sm:flex-row">
+      <div className="tile flex flex-col items-end gap-4 sm:flex-row">
         <div className="flex-1 w-full">
-          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>City A</label>
-          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--primary)' }} />
-            <input type="text" value={cityA} onChange={e => setCityA(e.target.value)} className="glass-input pl-11" /></div>
+          <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>City A</label>
+          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 z-10" style={{ color: 'var(--primary)' }} />
+            <input type="text" value={cityA} onChange={e => setCityA(e.target.value)} className="glass-input" style={{ paddingLeft: 44 }} /></div>
         </div>
-        <div className="flex h-11 items-center"><GitCompare className="h-5 w-5" style={{ color: 'var(--primary)' }} /></div>
+        <div className="flex h-11 items-center self-center"><GitCompare className="h-5 w-5" style={{ color: 'var(--primary)' }} /></div>
         <div className="flex-1 w-full">
-          <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>City B</label>
-          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--accent)' }} />
-            <input type="text" value={cityB} onChange={e => setCityB(e.target.value)} className="glass-input pl-11" /></div>
+          <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>City B</label>
+          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 z-10" style={{ color: 'var(--accent)' }} />
+            <input type="text" value={cityB} onChange={e => setCityB(e.target.value)} className="glass-input" style={{ paddingLeft: 44 }} /></div>
         </div>
         <button onClick={compare} disabled={loading} className="glass-btn flex h-11 items-center gap-2 px-6 text-sm w-full sm:w-auto">
           {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <GitCompare className="h-4 w-4" />} Compare
