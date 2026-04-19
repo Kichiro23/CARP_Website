@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { findUserByEmail, findUserByGoogleId, createUser, sanitizeUser, updateUser } from '../db/users';
 import { createRefreshToken, revokeRefreshToken, findRefreshToken } from '../db/tokens';
+import { createResetToken, findResetToken, revokeResetToken } from '../db/resetTokens';
 import { generateToken } from '../middleware/jwt';
 import { authenticateToken } from '../middleware/jwt';
 import type { AuthRequest } from '../middleware/jwt';
@@ -26,7 +27,7 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const user = createUser({
+    const user = await createUser({
       name,
       email,
       password: hashedPassword,
@@ -35,7 +36,7 @@ router.post('/register', async (req, res) => {
     });
 
     const token = generateToken(user.id);
-    const refreshToken = createRefreshToken(user.id);
+    const refreshToken = await createRefreshToken(user.id);
 
     res.status(201).json({
       user: sanitizeUser(user),
@@ -67,7 +68,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = generateToken(user.id);
-    const refreshToken = createRefreshToken(user.id);
+    const refreshToken = await createRefreshToken(user.id);
 
     res.json({
       user: sanitizeUser(user),
@@ -92,10 +93,10 @@ router.post('/google', async (req, res) => {
 
     if (user) {
       if (!user.google_id) {
-        user = updateUser(user.id, { google_id: googleId, auth_provider: 'google', avatar: picture || user.avatar }) || user;
+        user = await updateUser(user.id, { google_id: googleId, auth_provider: 'google', avatar: picture || user.avatar }) || user;
       }
     } else {
-      user = createUser({
+      user = await createUser({
         name,
         email,
         auth_provider: 'google',
@@ -107,7 +108,7 @@ router.post('/google', async (req, res) => {
     }
 
     const token = generateToken(user.id);
-    const refreshToken = createRefreshToken(user.id);
+    const refreshToken = await createRefreshToken(user.id);
 
     res.json({
       user: sanitizeUser(user),
@@ -125,10 +126,10 @@ router.get('/me', authenticateToken, (req: AuthRequest, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
   const { refreshToken } = req.body;
   if (refreshToken) {
-    revokeRefreshToken(refreshToken);
+    await revokeRefreshToken(refreshToken);
   }
   res.json({ message: 'Logged out' });
 });
@@ -148,6 +149,82 @@ router.post('/refresh', (req, res) => {
 
     const token = generateToken(stored.user_id);
     res.json({ token });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Forgot password - generates a reset token
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = findUserByEmail(email);
+    if (!user) {
+      // Return success even if email not found (security: don't reveal registered emails)
+      return res.json({ message: 'If an account exists, a reset link has been sent.' });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ error: 'This account uses Google sign-in. Please sign in with Google.' });
+    }
+
+    const resetToken = await createResetToken(user.id);
+
+    // In production, send this token via email (SMTP)
+    // For demo: return token in response so user can copy-paste it
+    res.json({
+      message: 'Password reset token generated. Check your email (or use the token below for demo).',
+      resetToken, // REMOVE THIS IN PRODUCTION - only for demo/testing
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reset password using token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const stored = findResetToken(token);
+    if (!stored) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await updateUser(stored.user_id, { password: hashedPassword });
+    await revokeResetToken(token);
+
+    res.json({ message: 'Password reset successfully. You can now log in with your new password.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify reset token (optional - for frontend validation)
+router.get('/verify-reset-token', (req, res) => {
+  try {
+    const token = req.query.token as string;
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    const stored = findResetToken(token);
+    if (!stored) {
+      return res.status(400).json({ valid: false, error: 'Invalid or expired token' });
+    }
+
+    res.json({ valid: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

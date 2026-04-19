@@ -1,7 +1,7 @@
 import { getDb, persist } from './jsonDb';
 import crypto from 'crypto';
 
-export function createRefreshToken(userId: number): string {
+export async function createRefreshToken(userId: number): Promise<string> {
   const db = getDb();
   const token = crypto.randomBytes(64).toString('hex');
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -12,7 +12,7 @@ export function createRefreshToken(userId: number): string {
     expires_at: expiresAt.toISOString(),
     created_at: new Date().toISOString(),
   });
-  persist();
+  await persist();
   return token;
 }
 
@@ -22,14 +22,14 @@ export function findRefreshToken(token: string) {
   );
 }
 
-export function revokeRefreshToken(token: string): void {
+export async function revokeRefreshToken(token: string): Promise<void> {
   const db = getDb();
   db.refreshTokens = db.refreshTokens.filter(t => t.token !== token);
-  persist();
+  await persist();
 }
 
-export function revokeAllUserTokens(userId: number): void {
+export async function revokeAllUserTokens(userId: number): Promise<void> {
   const db = getDb();
   db.refreshTokens = db.refreshTokens.filter(t => t.user_id !== userId);
-  persist();
+  await persist();
 }

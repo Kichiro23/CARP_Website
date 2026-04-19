@@ -60,6 +60,20 @@ export async function getCurrentUser() {
   return api('/api/auth/me');
 }
 
+export async function forgotPassword(email: string) {
+  return api('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  return api('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
 // User
 export async function getProfile() {
   return api('/api/user/profile');

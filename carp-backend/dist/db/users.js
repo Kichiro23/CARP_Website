@@ -17,7 +17,7 @@ function findUserById(id) {
 function findUserByGoogleId(googleId) {
     return (0, jsonDb_1.getDb)().users.find(u => u.google_id === googleId);
 }
-function createUser(input) {
+async function createUser(input) {
     const db = (0, jsonDb_1.getDb)();
     const user = {
         id: Date.now(),
@@ -32,24 +32,31 @@ function createUser(input) {
         created_at: new Date().toISOString(),
     };
     db.users.push(user);
-    (0, jsonDb_1.persist)();
+    await (0, jsonDb_1.persist)();
     return user;
 }
-function updateUser(id, updates) {
+async function updateUser(id, updates) {
     const db = (0, jsonDb_1.getDb)();
     const idx = db.users.findIndex(u => u.id === id);
     if (idx === -1)
         return undefined;
-    db.users[idx] = { ...db.users[idx], ...updates };
-    (0, jsonDb_1.persist)();
+    // Only update fields that are explicitly provided (not undefined)
+    const cleaned = {};
+    for (const [key, val] of Object.entries(updates)) {
+        if (val !== undefined) {
+            cleaned[key] = val;
+        }
+    }
+    db.users[idx] = { ...db.users[idx], ...cleaned };
+    await (0, jsonDb_1.persist)();
     return db.users[idx];
 }
-function deleteUser(id) {
+async function deleteUser(id) {
     const db = (0, jsonDb_1.getDb)();
     const len = db.users.length;
     db.users = db.users.filter(u => u.id !== id);
     if (db.users.length < len) {
-        (0, jsonDb_1.persist)();
+        await (0, jsonDb_1.persist)();
         return true;
     }
     return false;

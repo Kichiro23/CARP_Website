@@ -1,5 +1,5 @@
 import { getDb, persist } from './jsonDb';
-import type { DbUser, DbUser as User } from './jsonDb';
+import type { DbUser } from './jsonDb';
 
 export type { DbUser as User };
 
@@ -15,7 +15,7 @@ export function findUserByGoogleId(googleId: string): DbUser | undefined {
   return getDb().users.find(u => u.google_id === googleId);
 }
 
-export function createUser(input: {
+export async function createUser(input: {
   name: string;
   email: string;
   password?: string;
@@ -24,7 +24,7 @@ export function createUser(input: {
   google_id?: string;
   city?: string;
   country?: string;
-}): DbUser {
+}): Promise<DbUser> {
   const db = getDb();
   const user: DbUser = {
     id: Date.now(),
@@ -39,25 +39,32 @@ export function createUser(input: {
     created_at: new Date().toISOString(),
   };
   db.users.push(user);
-  persist();
+  await persist();
   return user;
 }
 
-export function updateUser(id: number, updates: Partial<Omit<DbUser, 'id' | 'created_at'>>): DbUser | undefined {
+export async function updateUser(id: number, updates: Partial<Omit<DbUser, 'id' | 'created_at'>>): Promise<DbUser | undefined> {
   const db = getDb();
   const idx = db.users.findIndex(u => u.id === id);
   if (idx === -1) return undefined;
-  db.users[idx] = { ...db.users[idx], ...updates };
-  persist();
+  // Only update fields that are explicitly provided (not undefined)
+  const cleaned: Partial<DbUser> = {};
+  for (const [key, val] of Object.entries(updates)) {
+    if (val !== undefined) {
+      (cleaned as any)[key] = val;
+    }
+  }
+  db.users[idx] = { ...db.users[idx], ...cleaned };
+  await persist();
   return db.users[idx];
 }
 
-export function deleteUser(id: number): boolean {
+export async function deleteUser(id: number): Promise<boolean> {
   const db = getDb();
   const len = db.users.length;
   db.users = db.users.filter(u => u.id !== id);
   if (db.users.length < len) {
-    persist();
+    await persist();
     return true;
   }
   return false;

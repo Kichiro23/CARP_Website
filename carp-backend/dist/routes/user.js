@@ -17,10 +17,10 @@ router.get('/profile', jwt_1.authenticateToken, (req, res) => {
     res.json({ user: (0, users_1.sanitizeUser)(user) });
 });
 // Update profile
-router.patch('/profile', jwt_1.authenticateToken, (req, res) => {
+router.patch('/profile', jwt_1.authenticateToken, async (req, res) => {
     try {
         const { name, email, city, country, avatar } = req.body;
-        const user = (0, users_1.updateUser)(req.user.id, { name, email, city, country, avatar });
+        const user = await (0, users_1.updateUser)(req.user.id, { name, email, city, country, avatar });
         if (!user)
             return res.status(404).json({ error: 'User not found' });
         res.json({ user: (0, users_1.sanitizeUser)(user) });
@@ -44,7 +44,7 @@ router.post('/change-password', jwt_1.authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'New password must be at least 6 characters' });
         }
         const hashed = await bcryptjs_1.default.hash(newPassword, 12);
-        (0, users_1.updateUser)(user.id, { password: hashed });
+        await (0, users_1.updateUser)(user.id, { password: hashed });
         res.json({ message: 'Password updated' });
     }
     catch (err) {
@@ -52,10 +52,10 @@ router.post('/change-password', jwt_1.authenticateToken, async (req, res) => {
     }
 });
 // Delete account
-router.delete('/account', jwt_1.authenticateToken, (req, res) => {
+router.delete('/account', jwt_1.authenticateToken, async (req, res) => {
     try {
-        (0, tokens_1.revokeAllUserTokens)(req.user.id);
-        (0, users_1.deleteUser)(req.user.id);
+        await (0, tokens_1.revokeAllUserTokens)(req.user.id);
+        await (0, users_1.deleteUser)(req.user.id);
         res.json({ message: 'Account deleted' });
     }
     catch (err) {

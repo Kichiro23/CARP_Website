@@ -9,7 +9,7 @@ exports.revokeRefreshToken = revokeRefreshToken;
 exports.revokeAllUserTokens = revokeAllUserTokens;
 const jsonDb_1 = require("./jsonDb");
 const crypto_1 = __importDefault(require("crypto"));
-function createRefreshToken(userId) {
+async function createRefreshToken(userId) {
     const db = (0, jsonDb_1.getDb)();
     const token = crypto_1.default.randomBytes(64).toString('hex');
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -20,19 +20,19 @@ function createRefreshToken(userId) {
         expires_at: expiresAt.toISOString(),
         created_at: new Date().toISOString(),
     });
-    (0, jsonDb_1.persist)();
+    await (0, jsonDb_1.persist)();
     return token;
 }
 function findRefreshToken(token) {
     return (0, jsonDb_1.getDb)().refreshTokens.find(t => t.token === token && new Date(t.expires_at) > new Date());
 }
-function revokeRefreshToken(token) {
+async function revokeRefreshToken(token) {
     const db = (0, jsonDb_1.getDb)();
     db.refreshTokens = db.refreshTokens.filter(t => t.token !== token);
-    (0, jsonDb_1.persist)();
+    await (0, jsonDb_1.persist)();
 }
-function revokeAllUserTokens(userId) {
+async function revokeAllUserTokens(userId) {
     const db = (0, jsonDb_1.getDb)();
     db.refreshTokens = db.refreshTokens.filter(t => t.user_id !== userId);
-    (0, jsonDb_1.persist)();
+    await (0, jsonDb_1.persist)();
 }

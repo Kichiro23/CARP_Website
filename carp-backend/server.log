@@ -1,26 +1,28 @@
-node:events:502
-      throw er; // Unhandled 'error' event
-      ^
-
-Error: listen EADDRINUSE: address already in use :::3001
-    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
-    at listenInCluster (node:net:1965:12)
-    at Server.listen (node:net:2067:7)
-    at Function.listen (/mnt/agents/output/carp-backend/node_modules/express/lib/application.js:635:24)
-    at Object.<anonymous> (/mnt/agents/output/carp-backend/dist/index.js:38:5)
-    at Module._compile (node:internal/modules/cjs/loader:1521:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
-    at Module.load (node:internal/modules/cjs/loader:1266:32)
-    at Module._load (node:internal/modules/cjs/loader:1091:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
-Emitted 'error' event on Server instance at:
-    at emitErrorNT (node:net:1944:8)
-    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
-  code: 'EADDRINUSE',
-  errno: -98,
-  syscall: 'listen',
-  address: '::',
-  port: 3001
-}
-
-Node.js v20.20.2
+CARP Backend running on http://localhost:3001
+Health check: http://localhost:3001/api/health
+2026-04-19T21:49:59.974Z GET /api/health
+2026-04-19T21:50:12.427Z GET /api/health
+2026-04-19T21:50:12.853Z POST /api/auth/register
+2026-04-19T21:50:22.019Z POST /api/auth/login
+2026-04-19T21:50:22.755Z POST /api/auth/login
+2026-04-19T21:50:23.534Z POST /api/auth/login
+2026-04-19T21:50:23.662Z POST /api/auth/register
+2026-04-19T21:50:23.878Z POST /api/auth/register
+2026-04-19T21:50:33.550Z GET /api/auth/me
+2026-04-19T21:50:33.724Z GET /api/auth/me
+2026-04-19T21:50:33.830Z GET /api/auth/me
+2026-04-19T21:50:33.940Z GET /api/user/profile
+2026-04-19T21:50:34.059Z PATCH /api/user/profile
+2026-04-19T21:50:34.159Z POST /api/user/change-password
+2026-04-19T21:50:39.888Z POST /api/auth/login
+2026-04-19T21:50:52.342Z POST /api/auth/login
+2026-04-19T21:51:03.607Z GET /api/auth/me
+2026-04-19T21:51:03.747Z GET /api/auth/me
+2026-04-19T21:51:03.905Z GET /api/user/profile
+2026-04-19T21:51:04.031Z PATCH /api/user/profile
+2026-04-19T21:51:04.164Z POST /api/user/change-password
+2026-04-19T21:51:04.963Z POST /api/user/change-password
+2026-04-19T21:51:13.017Z POST /api/auth/login
+2026-04-19T21:51:13.143Z POST /api/auth/login
+2026-04-19T21:51:13.262Z POST /api/auth/google
+2026-04-19T21:51:13.365Z POST /api/auth/google

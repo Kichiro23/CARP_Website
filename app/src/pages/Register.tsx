@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Eye, EyeOff, ArrowRight, MapPin, User, Mail, Lock, Search, X, Chrome, Globe } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, ArrowLeft, MapPin, User, Mail, Lock, Search, X, Chrome, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import CarpLogo from '@/components/CarpLogo';
 import Footer from '@/components/Footer';
@@ -73,28 +73,24 @@ export default function Register() {
     }
     try {
       const countryName = COUNTRIES_LIST.find((c) => c.code === country)?.name || country;
-      const success = await register(name, email, password, selectedCity?.name, countryName);
-      if (success) {
-        if (selectedCity) {
-          localStorage.setItem(
-            'carp_location',
-            JSON.stringify({
-              city: selectedCity.name,
-              region: selectedCity.region,
-              province: selectedCity.province,
-              country: countryName,
-              countryCode: country,
-              lat: selectedCity.lat,
-              lon: selectedCity.lon,
-            })
-          );
-        }
-        navigate('/dashboard');
-      } else {
-        setError('Email already registered');
+      await register(name, email, password, selectedCity?.name, countryName);
+      if (selectedCity) {
+        localStorage.setItem(
+          'carp_location',
+          JSON.stringify({
+            city: selectedCity.name,
+            region: selectedCity.region,
+            province: selectedCity.province,
+            country: countryName,
+            countryCode: country,
+            lat: selectedCity.lat,
+            lon: selectedCity.lon,
+          })
+        );
       }
-    } catch {
-      setError('Server error. Is the backend running?');
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
     }
   };
 
@@ -102,18 +98,14 @@ export default function Register() {
     setError('');
     const mockGoogleId = 'google-' + Date.now();
     try {
-      const success = await googleLogin({
+      await googleLogin({
         googleId: mockGoogleId,
         name: name || 'Google User',
         email: email || `user_${Date.now()}@gmail.com`,
       });
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Google sign-in failed');
-      }
-    } catch {
-      setError('Server error. Is the backend running?');
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Google sign-in failed');
     }
   };
 
@@ -142,6 +134,16 @@ export default function Register() {
           </div>
 
           <div className="glass-strong p-6 sm:p-8">
+            {/* Back button */}
+            <div className="mb-4">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 text-xs font-medium transition-all hover:opacity-70"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
+              </Link>
+            </div>
             <div className="mb-5 text-center">
               <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>
                 Create Account

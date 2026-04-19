@@ -241,7 +241,7 @@ Developed by **BSCpE 3C Students 2026**
 
 ## License
 
-This project was created for academic purposes at Bulacan State University.
+This project was created for academic purposes at [Your University Name].
 
 ---
 

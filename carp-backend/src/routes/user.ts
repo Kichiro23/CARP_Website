@@ -14,10 +14,10 @@ router.get('/profile', authenticateToken, (req: AuthRequest, res) => {
 });
 
 // Update profile
-router.patch('/profile', authenticateToken, (req: AuthRequest, res) => {
+router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, email, city, country, avatar } = req.body;
-    const user = updateUser(req.user!.id, { name, email, city, country, avatar });
+    const user = await updateUser(req.user!.id, { name, email, city, country, avatar });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user: sanitizeUser(user) });
   } catch (err: any) {
@@ -39,7 +39,7 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
       return res.status(400).json({ error: 'New password must be at least 6 characters' });
     }
     const hashed = await bcrypt.hash(newPassword, 12);
-    updateUser(user.id, { password: hashed });
+    await updateUser(user.id, { password: hashed });
     res.json({ message: 'Password updated' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -47,10 +47,10 @@ router.post('/change-password', authenticateToken, async (req: AuthRequest, res)
 });
 
 // Delete account
-router.delete('/account', authenticateToken, (req: AuthRequest, res) => {
+router.delete('/account', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    revokeAllUserTokens(req.user!.id);
-    deleteUser(req.user!.id);
+    await revokeAllUserTokens(req.user!.id);
+    await deleteUser(req.user!.id);
     res.json({ message: 'Account deleted' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

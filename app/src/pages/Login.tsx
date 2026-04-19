@@ -23,14 +23,10 @@ export default function Login() {
       return;
     }
     try {
-      const success = await login(email, password);
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Invalid email or password');
-      }
-    } catch {
-      setError('Server error. Is the backend running?');
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
     }
   };
 
@@ -42,14 +38,10 @@ export default function Login() {
   }) => {
     setError('');
     try {
-      const success = await googleLogin(data);
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Google sign-in failed');
-      }
-    } catch {
-      setError('Server error. Is the backend running?');
+      await googleLogin(data);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Google sign-in failed');
     }
   };
 
@@ -161,12 +153,21 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="mt-5 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-              Don't have an account?{' '}
-              <Link to="/register" className="font-bold" style={{ color: 'var(--primary)' }}>
-                Register
+            <div className="mt-4 flex items-center justify-between text-xs">
+              <Link
+                to="/forgot-password"
+                className="font-medium transition-all hover:opacity-70"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Forgot password?
               </Link>
-            </p>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                Don't have an account?{' '}
+                <Link to="/register" className="font-bold" style={{ color: 'var(--primary)' }}>
+                  Register
+                </Link>
+              </span>
+            </div>
           </div>
         </div>
       </div>
