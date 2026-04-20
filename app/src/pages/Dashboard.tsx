@@ -1,225 +1,221 @@
 import { useState, useEffect } from 'react';
-import { Thermometer, Droplets, Sun, CloudRain, Wind, RefreshCw, MapPin, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
-import { fetchWeather, fetchPM25, wmoEmoji, wmoLabel, pm25Class, aqiColor } from '@/services/weatherApi';
-import { DEFAULT_LOCATION } from '@/config/api';
-import type { WeatherData } from '@/types';
-import '@/lib/chart';
+import { useNavigate } from 'react-router-dom';
+import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle } from 'lucide-react';
+import { fetchWeather, fetchPM25, fetchAirQuality, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
+import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
+import LocationSelector from '@/components/LocationSelector';
+import CitySearch from '@/components/CitySearch';
+import type { WeatherData } from '@/types';
+import type { SavedLocation } from '@/hooks/useLocation';
+import type { NewsArticle } from '@/types';
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
-function getLocation() {
-  const saved = localStorage.getItem('carp_location');
-  if (saved) {
-    try { return JSON.parse(saved); } catch { /* ignore */ }
-  }
-  return { city: DEFAULT_LOCATION.city, country: DEFAULT_LOCATION.country };
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const NEWS_FALLBACK = './news-fallback.jpg';
+
+interface Props {
+  current: SavedLocation;
+  locations: SavedLocation[];
+  selectLocation: (loc: SavedLocation) => void;
+  addLocation: (loc: Omit<SavedLocation, 'id' | 'isDefault'>) => void;
 }
 
-function SkeletonTile({ h = 100 }: { h?: number }) {
-  return <div className="tile"><div className="skeleton" style={{ height: h }} /></div>;
-}
-
-export default function Dashboard() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const [currentTime, setCurrentTime] = useState(new Date());
+export default function Dashboard({ current, locations, selectLocation, addLocation }: Props) {
+  const nav = useNavigate();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [pm25, setPm25] = useState<number | null>(null);
+  const [airQuality, setAirQuality] = useState<{ pm25: number; pm10: number; co: number; no2: number; o3: number; so2: number; aqi: number } | null>(null);
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const loc = getLocation();
+  const [error, setError] = useState('');
+  const [time, setTime] = useState(new Date());
 
-  useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    const w = await fetchWeather(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
-    const p = await fetchPM25(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
-    setWeather(w); setPm25(p); setLoading(false);
-  };
-  useEffect(() => { loadData(); }, []);
-
-  const chartOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } },
-      y: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b', font: { size: 10 } }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } },
-    },
+  const load = async () => {
+    setLoading(true); setError('');
+    try {
+      const [w, p, aq, n] = await Promise.all([
+        fetchWeather(current.lat, current.lng),
+        fetchPM25(current.lat, current.lng),
+        fetchAirQuality(current.lat, current.lng),
+        fetchNews(),
+      ]);
+      setWeather(w); setPm25(p); setAirQuality(aq); setNews(n.slice(0, 4));
+      if (!w) setError('Could not load weather data. Check your connection.');
+    } catch { setError('Failed to load data.'); }
+    setLoading(false);
   };
 
-  const aqi = pm25 !== null ? pm25Class(pm25) : null;
-  const wmo = weather ? wmoLabel(weather.current.weatherCode) : '';
-  const wmoIcon = weather ? wmoEmoji(weather.current.weatherCode) : '';
+  useEffect(() => { load(); }, [current.lat, current.lng]);
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="grid-tiles-4">
-          <SkeletonTile /><SkeletonTile /><SkeletonTile /><SkeletonTile />
-        </div>
-        <SkeletonTile h={120} />
-        <SkeletonTile h={140} />
-        <div className="grid-tiles-2">
-          <SkeletonTile h={200} /><SkeletonTile h={200} />
-        </div>
+  const handleAddCity = (city: { name: string; country: string; lat: number; lng: number }) => {
+    const exists = locations.some(l => l.name === city.name && l.country === city.country);
+    if (!exists) addLocation(city);
+  };
+
+  const cOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { x: { ticks: { color: '#9a9da8', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              y: { ticks: { color: '#9a9da8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } };
+
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Dashboard</h1><div className="skeleton mt-1 h-4 w-40" /></div>
       </div>
-    );
-  }
+      <div className="grid-tiles-4">{[1, 2, 3, 4].map(i => <div key={i} className="tile"><div className="skeleton mb-2 h-8 w-8 rounded-lg" /><div className="skeleton h-6 w-20 mb-1" /><div className="skeleton h-3 w-24" /></div>)}</div>
+      <div className="tile"><div className="skeleton h-4 w-40 mb-3" /><div className="grid-tiles-3">{[1, 2, 3].map(i => <div key={i} className="skeleton h-24 rounded-xl" />)}</div></div>
+    </div>
+  );
+
+  if (error || !weather) return (
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
+      <AlertTriangle className="h-10 w-10 text-red-400" />
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{error || 'No data available'}</p>
+      <button onClick={load} className="glass-btn px-5 py-2 text-xs"><RefreshCw className="mr-1 h-3 w-3" /> Retry</button>
+    </div>
+  );
+
+  const cur = weather.current;
+  const aqiTxt = pm25 !== null ? (pm25 <= 12 ? 'Good' : pm25 <= 35 ? 'Moderate' : pm25 <= 55 ? 'Unhealthy' : 'Hazardous') : '';
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Dashboard</h1>
-          <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-            <MapPin className="mr-1 inline h-3 w-3" style={{ color: 'var(--primary)' }} />
-            {loc.city}, {loc.country}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="glass-badge" style={{ color: 'var(--text)' }}>
-            <Clock className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} />
-            <span className="text-ellipsis">{currentTime.toLocaleTimeString('en-US', { hour12: true })}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <LocationSelector locations={locations} current={current} onSelect={selectLocation} />
+            <CitySearch onSelect={handleAddCity} placeholder="+ Add city" />
           </div>
-          <button onClick={loadData} className="glass-badge cursor-pointer hover:border-[var(--primary)]/30 transition-colors" style={{ color: 'var(--text)' }}>
-            <RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Refresh
-          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="glass-badge"><Clock className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} />{time.toLocaleTimeString()}</div>
+          <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Refresh</button>
         </div>
       </div>
 
-      {/* TILE 1: Weather Metrics */}
-      <div className="grid-tiles-4 stagger">
-        {/* Temperature */}
-        <div className="tile animate-fadeInUp">
-          <div className="tile-icon" style={{ background: 'rgba(234,157,99,0.10)' }}>
-            <Thermometer className="h-4 w-4" style={{ color: 'var(--primary)' }} />
-          </div>
-          <p className="tile-value">{weather?.current.temperature || 0}<span className="unit">C</span></p>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{wmoIcon} {wmo}</p>
+      <div className="grid-tiles-4">
+        <div className="tile">
+          <div className="tile-icon" style={{ background: 'rgba(234,157,99,0.10)' }}><Thermometer className="h-4 w-4" style={{ color: 'var(--primary)' }} /></div>
+          <p className="tile-value">{cur.temperature}<span className="unit">C</span></p>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{wmoEmoji(cur.weatherCode)} {wmoLabel(cur.weatherCode)}</p>
         </div>
-
-        {/* Humidity */}
-        <div className="tile animate-fadeInUp">
-          <div className="tile-icon" style={{ background: 'rgba(59,130,246,0.10)' }}>
-            <Droplets className="h-4 w-4 text-blue-400" />
-          </div>
-          <p className="tile-value">{weather?.current.humidity || 0}<span className="unit">%</span></p>
+        <div className="tile">
+          <div className="tile-icon" style={{ background: 'rgba(59,130,246,0.10)' }}><Droplets className="h-4 w-4 text-blue-400" /></div>
+          <p className="tile-value">{cur.humidity}<span className="unit">%</span></p>
           <p className="tile-desc">Relative humidity</p>
         </div>
-
-        {/* Wind */}
-        <div className="tile animate-fadeInUp">
-          <div className="tile-icon" style={{ background: 'rgba(16,185,129,0.10)' }}>
-            <Wind className="h-4 w-4 text-emerald-400" />
-          </div>
-          <p className="tile-value">{weather?.current.windSpeed || 0}<span className="unit"> km/h</span></p>
+        <div className="tile">
+          <div className="tile-icon" style={{ background: 'rgba(16,185,129,0.10)' }}><Wind className="h-4 w-4 text-emerald-400" /></div>
+          <p className="tile-value">{cur.windSpeed}<span className="unit"> km/h</span></p>
           <p className="tile-desc">10m above ground</p>
         </div>
-
-        {/* AQI */}
-        <div className="tile animate-fadeInUp">
-          <div className="tile-icon" style={{ background: aqi ? `${aqiColor(pm25 || 0)}15` : 'rgba(255,255,255,0.04)' }}>
-            <AlertTriangle className="h-4 w-4" style={{ color: aqi ? aqiColor(pm25 || 0) : 'var(--text-muted)' }} />
+        <div className="tile">
+          <div className="tile-icon" style={{ background: pm25 !== null ? `${aqiColor(pm25)}15` : 'rgba(255,255,255,0.04)' }}>
+            <AlertTriangle className="h-4 w-4" style={{ color: pm25 !== null ? aqiColor(pm25) : 'var(--text-muted)' }} />
           </div>
-          <p className="tile-value" style={{ color: aqi ? aqiColor(pm25 || 0) : 'var(--text)' }}>{pm25 !== null ? pm25 : '--'}</p>
-          {aqi && <span className={`aqi-badge aqi-${aqi.cls} mt-1 text-[10px]`}>{aqi.label}</span>}
-          <p className="tile-desc mt-1">PM2.5 (ug/m3)</p>
+          <p className="tile-value" style={{ color: pm25 !== null ? aqiColor(pm25) : 'var(--text)' }}>{pm25 !== null ? pm25 : '--'}</p>
+          {aqiTxt && <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold mt-1 ${pm25Class(pm25 || 0)}`}>{aqiTxt}</span>}
+          <p className="tile-desc mt-1">PM2.5</p>
         </div>
       </div>
 
-      {/* TILE 2: AI Weather Intelligence */}
-      {weather && (
-        <div className="tile animate-fadeInUp">
-          <h3 className="tile-title">AI Weather Intelligence</h3>
-          <div className="grid-tiles-3">
-            <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(234,157,99,0.15)', background: 'rgba(234,157,99,0.03)' }}>
-              <div className="mb-2 flex items-center gap-2">
-                <Shirt className="h-4 w-4 shrink-0" style={{ color: 'var(--primary)' }} />
-                <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--primary)' }}>Clothing</span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                {weather.current.temperature > 32 ? 'Very hot - wear light, breathable fabrics and a hat.' :
-                 weather.current.temperature > 26 ? 'Warm - short sleeves and light cotton ideal.' :
-                 weather.current.temperature > 20 ? 'Pleasant - t-shirt with light layers works.' :
-                 weather.current.temperature > 14 ? 'Cool - bring a jacket or sweater.' :
-                 'Cold - warm layers, coat, and gloves recommended.'}
-              </p>
+      {airQuality && (
+        <div className="tile" style={{ background: `linear-gradient(135deg, ${aqiColor(airQuality.pm25)}08, transparent)` }}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: aqiColor(airQuality.pm25) }}>Air Quality Index</h3>
+            <button onClick={() => nav('/air-quality')} className="text-[10px] font-semibold hover:opacity-70" style={{ color: 'var(--primary)' }}>View Details &rarr;</button>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold" style={{ background: `${aqiColor(airQuality.pm25)}20`, border: `2px solid ${aqiColor(airQuality.pm25)}`, color: aqiColor(airQuality.pm25) }}>
+              {airQuality.aqi}
             </div>
-            <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.03)' }}>
-              <div className="mb-2 flex items-center gap-2">
-                <Umbrella className="h-4 w-4 shrink-0 text-blue-400" />
-                <span className="text-[10px] font-bold uppercase text-blue-400">Travel</span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                {weather.current.precipitation > 5 ? 'Heavy rain - bring umbrella, avoid low roads.' :
-                 weather.current.precipitation > 1 ? 'Light rain possible - compact umbrella handy.' :
-                 weather.current.precipitation > 0 ? 'Drizzle possible - roads may be wet.' :
-                 weather.current.windSpeed > 40 ? 'Strong winds - secure loose objects.' :
-                 'Good conditions - clear skies, safe roads.'}
+            <div className="flex-1">
+              <p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>
+                {airQuality.aqi <= 1 ? 'Good' : airQuality.aqi <= 2 ? 'Moderate' : airQuality.aqi <= 3 ? 'Unhealthy for Sensitive Groups' : airQuality.aqi <= 4 ? 'Unhealthy' : 'Hazardous'}
               </p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>PM2.5: {airQuality.pm25} | PM10: {airQuality.pm10} | O3: {airQuality.o3}</p>
             </div>
-            <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(16,185,129,0.15)', background: 'rgba(16,185,129,0.03)' }}>
-              <div className="mb-2 flex items-center gap-2">
-                <HeartPulse className="h-4 w-4 shrink-0 text-emerald-400" />
-                <span className="text-[10px] font-bold uppercase text-emerald-400">Health</span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                {weather.current.uvIndex > 10 ? 'Extreme UV - avoid sun 10am-4pm, SPF 50+.' :
-                 weather.current.uvIndex > 7 ? 'Very high UV - limit outdoor time, use sunscreen.' :
-                 weather.current.uvIndex > 5 ? 'High UV - apply sunscreen, seek shade.' :
-                 weather.current.uvIndex > 2 ? 'Moderate UV - sunscreen still recommended.' :
-                 'Low UV - minimal protection needed.'}
-                {weather.current.humidity > 80 ? ' High humidity may discomfort sensitive people.' : ''}
-              </p>
+            <div className="h-2 w-32 rounded-full hidden sm:block" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <div className="h-2 rounded-full" style={{ width: `${Math.min(100, (airQuality.aqi / 5) * 100)}%`, background: aqiColor(airQuality.pm25) }} />
             </div>
           </div>
         </div>
       )}
 
-      {/* TILE 3: 7-Day Forecast */}
-      {weather && (
-        <div className="tile animate-fadeInUp">
-          <h3 className="tile-title">7-Day Forecast</h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-            {weather.daily.slice(0, 7).map((day) => (
-              <button key={day.date} className="tile !p-3 text-center" style={{ padding: '12px' }}>
-                <p className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>{day.dayName}</p>
-                <p className="my-1 text-lg">{wmoEmoji(day.weatherCode)}</p>
-                <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{day.maxTemp}C</p>
-                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{day.minTemp}C low</p>
-              </button>
+      <div className="tile">
+        <h3 className="tile-title">AI Weather Intelligence</h3>
+        <div className="grid-tiles-3">
+          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(234,157,99,0.15)', background: 'rgba(234,157,99,0.03)' }}>
+            <div className="mb-2 flex items-center gap-2"><Shirt className="h-4 w-4 shrink-0" style={{ color: 'var(--primary)' }} /><span className="text-[10px] font-bold uppercase" style={{ color: 'var(--primary)' }}>Clothing</span></div>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              {cur.temperature > 32 ? 'Very hot - wear light breathable fabrics, hat, and sunglasses.' : cur.temperature > 26 ? 'Warm - short sleeves and light clothing ideal.' : cur.temperature > 20 ? 'Pleasant - t-shirt with light layers recommended.' : cur.temperature > 10 ? 'Cool - bring a jacket or sweater.' : 'Cold - wear warm layers, coat, and gloves.'}
+            </p>
+          </div>
+          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.03)' }}>
+            <div className="mb-2 flex items-center gap-2"><Umbrella className="h-4 w-4 shrink-0 text-blue-400" /><span className="text-[10px] font-bold uppercase text-blue-400">Travel</span></div>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              {cur.precipitation > 5 ? 'Heavy rain expected - bring umbrella, avoid low-lying areas.' : cur.precipitation > 0 ? 'Light drizzle possible - carry a light rain jacket.' : cur.windSpeed > 30 ? 'Windy conditions - secure loose items outdoors.' : 'Good conditions - clear skies, safe for travel.'}
+            </p>
+          </div>
+          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(16,185,129,0.15)', background: 'rgba(16,185,129,0.03)' }}>
+            <div className="mb-2 flex items-center gap-2"><HeartPulse className="h-4 w-4 shrink-0 text-emerald-400" /><span className="text-[10px] font-bold uppercase text-emerald-400">Health</span></div>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              {cur.uvIndex > 10 ? 'Extreme UV - SPF 50+, seek shade 10am-4pm.' : cur.uvIndex > 7 ? 'Very high UV - use sunscreen SPF 30+, wear hat.' : cur.uvIndex > 5 ? 'High UV - apply sunscreen, limit sun exposure.' : cur.uvIndex > 2 ? 'Moderate UV - basic sun protection recommended.' : 'Low UV - minimal protection needed.'}
+              {pm25 !== null && pm25 > 35 && ' Air quality poor - consider wearing a mask outdoors.'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="tile">
+        <h3 className="tile-title">7-Day Forecast</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {weather.daily.slice(0, 7).map((d, i) => {
+            const date = new Date(d.time);
+            return (
+              <div key={i} className="tile !p-3 text-center">
+                <p className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>{DAYS[date.getDay()]}</p>
+                <p className="my-1 text-2xl">{wmoEmoji(d.weatherCode)}</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{d.maxTemp}C</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{d.minTemp}C low &middot; {d.precipitationProbability}% rain</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid-tiles-2">
+        <div className="tile">
+          <div className="mb-3 flex items-center gap-2"><Thermometer className="h-4 w-4" style={{ color: 'var(--primary)' }} /><h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>Temperature (24H)</h3></div>
+          <div className="h-[180px]"><Line data={{ labels: weather.hourly.slice(0, 24).map(h => h.time.slice(11, 16)), datasets: [{ data: weather.hourly.slice(0, 24).map(h => h.temperature), borderColor: '#EA9D63', backgroundColor: '#EA9D6318', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 }] }} options={cOpts} /></div>
+        </div>
+        <div className="tile">
+          <div className="mb-3 flex items-center gap-2"><Droplets className="h-4 w-4 text-blue-400" /><h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Precipitation (24H)</h3></div>
+          <div className="h-[180px]"><Line data={{ labels: weather.hourly.slice(0, 24).map(h => h.time.slice(11, 16)), datasets: [{ data: weather.hourly.slice(0, 24).map(h => h.precipitationProbability), borderColor: '#3b82f6', backgroundColor: '#3b82f618', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 }] }} options={cOpts} /></div>
+        </div>
+      </div>
+
+      {news.length > 0 && (
+        <div className="tile">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="tile-title">Climate News</h3>
+            <button onClick={() => nav('/news')} className="text-[10px] font-semibold hover:opacity-70" style={{ color: 'var(--primary)' }}>View All &rarr;</button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {news.slice(0, 4).map((a, i) => (
+              <a key={i} href={a.link} target="_blank" rel="noopener noreferrer" className="flex gap-3 rounded-xl border p-3 transition-all hover:border-[#EA9D6330]" style={{ borderColor: 'var(--tile-border)', background: 'rgba(255,255,255,0.02)' }}>
+                <img src={a.thumbnail || NEWS_FALLBACK} alt="" className="h-16 w-24 shrink-0 rounded-lg object-cover" onError={e => { (e.target as HTMLImageElement).src = NEWS_FALLBACK; }} />
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-clamp-2" style={{ color: 'var(--text)' }}>{a.title}</h4>
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>{a.pubDate} &middot; {a.source}</p>
+                </div>
+              </a>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* TILE 4: Charts */}
-      {weather && (
-        <div className="grid-tiles-2 stagger">
-          {[
-            { label: 'Temperature (24H)', color: '#EA9D63', data: weather.hourly.temperature, icon: Thermometer },
-            { label: 'Humidity (24H)', color: '#3b82f6', data: weather.hourly.humidity, icon: Droplets },
-            { label: 'UV Index (24H)', color: '#f59e0b', data: weather.hourly.uvIndex, icon: Sun },
-            { label: 'Precipitation (24H)', color: '#8b5cf6', data: weather.hourly.precipitation, icon: CloudRain },
-          ].map((chart) => (
-            <div key={chart.label} className="tile animate-fadeInUp">
-              <div className="mb-3 flex items-center gap-2">
-                <chart.icon className="h-4 w-4 shrink-0" style={{ color: chart.color }} />
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-ellipsis" style={{ color: chart.color }}>{chart.label}</h3>
-              </div>
-              <div className="h-[180px]">
-                <Line data={{
-                  labels: weather.hourly.time,
-                  datasets: [{ data: chart.data, borderColor: chart.color, backgroundColor: chart.color + '18', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5 }]
-                }} options={chartOpts} />
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>

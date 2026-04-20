@@ -1,99 +1,88 @@
-import { useState, useEffect } from 'react';
-import { GitCompare, Thermometer, Droplets, Wind, Sun, MapPin } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
-import { fetchWeather, geocodeCity } from '@/services/weatherApi';
+import { useState } from 'react';
+import { Search, GitCompare, Thermometer, Droplets, Wind, AlertTriangle } from 'lucide-react';
+import { geocodeCity, fetchWeather, fetchPM25, wmoEmoji, wmoLabel, aqiColor } from '@/services/weatherApi';
 import type { WeatherData } from '@/types';
-import { Bar } from 'react-chartjs-2';
-import '@/lib/chart';
+
+interface CityData { name: string; country: string; weather: WeatherData; pm25: number | null; }
 
 export default function Compare() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const [cityA, setCityA] = useState('Manila');
-  const [cityB, setCityB] = useState('Tokyo');
-  const [dataA, setDataA] = useState<WeatherData | null>(null);
-  const [dataB, setDataB] = useState<WeatherData | null>(null);
+  const [cityA, setCityA] = useState('');
+  const [cityB, setCityB] = useState('');
+  const [dataA, setDataA] = useState<CityData | null>(null);
+  const [dataB, setDataB] = useState<CityData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const compare = async () => {
-    setLoading(true); setError('');
-    const [gA, gB] = await Promise.all([geocodeCity(cityA), geocodeCity(cityB)]);
-    if (!gA || !gB) { setError('City not found'); setLoading(false); return; }
-    const [wA, wB] = await Promise.all([fetchWeather(gA.lat, gA.lon), fetchWeather(gB.lat, gB.lon)]);
-    setDataA(wA); setDataB(wB);
-    if (!wA || !wB) setError('Failed to load data');
+  const compare = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(''); setDataA(null); setDataB(null);
+    if (!cityA.trim() || !cityB.trim()) { setError('Enter both cities'); return; }
+    setLoading(true);
+    try {
+      const [geoA, geoB] = await Promise.all([geocodeCity(cityA), geocodeCity(cityB)]);
+      if (!geoA) { setError(`Could not find city: ${cityA}`); setLoading(false); return; }
+      if (!geoB) { setError(`Could not find city: ${cityB}`); setLoading(false); return; }
+      const [wA, wB, pA, pB] = await Promise.all([
+        fetchWeather(geoA.lat, geoA.lon), fetchWeather(geoB.lat, geoB.lon),
+        fetchPM25(geoA.lat, geoA.lon), fetchPM25(geoB.lat, geoB.lon),
+      ]);
+      if (wA) setDataA({ name: geoA.name, country: geoA.country, weather: wA, pm25: pA });
+      if (wB) setDataB({ name: geoB.name, country: geoB.country, weather: wB, pm25: pB });
+    } catch { setError('Failed to fetch data.'); }
     setLoading(false);
   };
-  useEffect(() => { compare(); }, []);
 
-  const chartOpts = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: isDark ? '#9a9da8' : '#5a5d6b', font: { size: 11 } } } },
-    scales: { x: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b' }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } }, y: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b' }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } } },
+  const StatRow = ({ icon: Icon, label, aVal, bVal, unit }: { icon: any; label: string; aVal: string | number; bVal: string | number; unit?: string }) => {
+    const a = Number(aVal) || 0; const b = Number(bVal) || 0;
+    const diff = a - b;
+    return (
+      <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--tile-border)' }}>
+        <div className="flex items-center gap-2 flex-1"><Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-muted)' }} /><span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</span></div>
+        <div className="flex items-center gap-6">
+          <span className="text-right text-xs font-bold w-16" style={{ color: 'var(--text)' }}>{aVal}{unit}</span>
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold" style={{ background: diff > 0 ? 'rgba(234,157,99,0.15)' : 'rgba(59,130,246,0.15)', color: diff > 0 ? '#EA9D63' : '#3b82f6' }}>{diff > 0 ? '+' : ''}{diff.toFixed(1)}</div>
+          <span className="text-right text-xs font-bold w-16" style={{ color: 'var(--text)' }}>{bVal}{unit}</span>
+        </div>
+      </div>
+    );
   };
 
-  const metrics = dataA && dataB ? [
-    { label: 'Temperature (C)', icon: Thermometer, values: [dataA.current.temperature, dataB.current.temperature], color: '#EA9D63' },
-    { label: 'Humidity (%)', icon: Droplets, values: [dataA.current.humidity, dataB.current.humidity], color: '#3b82f6' },
-    { label: 'Wind (km/h)', icon: Wind, values: [dataA.current.windSpeed, dataB.current.windSpeed], color: '#10b981' },
-    { label: 'UV Index', icon: Sun, values: [dataA.current.uvIndex, dataB.current.uvIndex], color: '#f59e0b' },
-  ] : [];
-
   return (
-    <div className="space-y-4">
-      <div><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Compare</h1><p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>Compare weather between two cities</p></div>
-
-      <div className="tile flex flex-col items-end gap-4 sm:flex-row">
-        <div className="flex-1 w-full">
-          <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>City A</label>
-          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 z-10" style={{ color: 'var(--primary)' }} />
-            <input type="text" value={cityA} onChange={e => setCityA(e.target.value)} className="glass-input" style={{ paddingLeft: 44 }} /></div>
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-4"><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Compare Cities</h1><p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Side-by-side weather comparison</p></div>
+      <form onSubmit={compare} className="mb-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="relative"><Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} /><input type="text" value={cityA} onChange={e => setCityA(e.target.value)} placeholder="City A (e.g. Manila)" className="glass-input" style={{ paddingLeft: 44 }} /></div>
+          <div className="relative"><Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} /><input type="text" value={cityB} onChange={e => setCityB(e.target.value)} placeholder="City B (e.g. Tokyo)" className="glass-input" style={{ paddingLeft: 44 }} /></div>
         </div>
-        <div className="flex h-11 items-center self-center"><GitCompare className="h-5 w-5" style={{ color: 'var(--primary)' }} /></div>
-        <div className="flex-1 w-full">
-          <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>City B</label>
-          <div className="relative"><MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 z-10" style={{ color: 'var(--accent)' }} />
-            <input type="text" value={cityB} onChange={e => setCityB(e.target.value)} className="glass-input" style={{ paddingLeft: 44 }} /></div>
-        </div>
-        <button onClick={compare} disabled={loading} className="glass-btn flex h-11 items-center gap-2 px-6 text-sm w-full sm:w-auto">
-          {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <GitCompare className="h-4 w-4" />} Compare
+        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+        <button type="submit" disabled={loading} className="glass-btn mt-3 w-full justify-center py-3">
+          <GitCompare className="h-4 w-4" /> {loading ? 'Loading...' : 'Compare'}
         </button>
-      </div>
-
-      {error && <div className="tile text-red-400 text-center text-sm py-3">{error}</div>}
-
+      </form>
       {dataA && dataB && (
-        <>
-          <div className="grid-tiles-2">
-            {[{ label: cityA, data: dataA, color: '#EA9D63' }, { label: cityB, data: dataB, color: '#A2B7C7' }].map(c => (
-              <div key={c.label} className="tile" style={{ borderColor: c.color + '30' }}>
-                <h3 className="mb-4 text-base font-bold truncate" style={{ color: c.color }}>{c.label}</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[{ l: 'Temp', v: `${c.data.current.temperature}C`, color: '#EA9D63' }, { l: 'Humidity', v: `${c.data.current.humidity}%`, color: '#3b82f6' }, { l: 'Wind', v: `${c.data.current.windSpeed} km/h`, color: '#10b981' }, { l: 'UV', v: `${c.data.current.uvIndex}`, color: '#f59e0b' }].map(item => (
-                    <div key={item.l} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <p className="text-[10px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>{item.l}</p>
-                      <p className="mt-1 text-base font-bold" style={{ color: 'var(--text)' }}>{item.v}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+        <div className="tile">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-center flex-1"><h3 className="text-sm font-bold" style={{ color: 'var(--text)' }}>{dataA.name}</h3><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{dataA.country}</p><p className="mt-1 text-2xl">{wmoEmoji(dataA.weather.current.weatherCode)}</p></div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}><GitCompare className="h-4 w-4" style={{ color: 'var(--primary)' }} /></div>
+            <div className="text-center flex-1"><h3 className="text-sm font-bold" style={{ color: 'var(--text)' }}>{dataB.name}</h3><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{dataB.country}</p><p className="mt-1 text-2xl">{wmoEmoji(dataB.weather.current.weatherCode)}</p></div>
           </div>
-
-          <div className="tile">
-            <h3 className="tile-title">Comparison Chart</h3>
-            <div className="h-[220px]">
-              <Bar data={{
-                labels: metrics.map(m => m.label),
-                datasets: [
-                  { label: cityA, data: metrics.map(m => m.values[0]), backgroundColor: '#EA9D6370', borderColor: '#EA9D63', borderWidth: 1, borderRadius: 5 },
-                  { label: cityB, data: metrics.map(m => m.values[1]), backgroundColor: '#A2B7C770', borderColor: '#A2B7C7', borderWidth: 1, borderRadius: 5 },
-                ]
-              }} options={chartOpts} />
+          <StatRow icon={Thermometer} label="Temperature" aVal={dataA.weather.current.temperature} bVal={dataB.weather.current.temperature} unit="C" />
+          <StatRow icon={Droplets} label="Humidity" aVal={dataA.weather.current.humidity} bVal={dataB.weather.current.humidity} unit="%" />
+          <StatRow icon={Wind} label="Wind Speed" aVal={dataA.weather.current.windSpeed} bVal={dataB.weather.current.windSpeed} unit=" km/h" />
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-2 flex-1"><AlertTriangle className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-muted)' }} /><span className="text-xs" style={{ color: 'var(--text-secondary)' }}>PM2.5</span></div>
+            <div className="flex items-center gap-6">
+              <span className="w-16 text-right text-xs font-bold" style={{ color: dataA.pm25 !== null ? aqiColor(dataA.pm25) : 'var(--text-muted)' }}>{dataA.pm25 ?? '--'}</span>
+              <div className="h-6 w-6" />
+              <span className="w-16 text-right text-xs font-bold" style={{ color: dataB.pm25 !== null ? aqiColor(dataB.pm25) : 'var(--text-muted)' }}>{dataB.pm25 ?? '--'}</span>
             </div>
           </div>
-        </>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{wmoLabel(dataA.weather.current.weatherCode)}</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{wmoLabel(dataB.weather.current.weatherCode)}</span>
+          </div>
+        </div>
       )}
     </div>
   );

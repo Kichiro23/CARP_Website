@@ -1,22 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { Theme } from '@/types';
-
-const THEME_KEY = 'carp_theme';
 
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem(THEME_KEY);
-    return (saved === 'light' ? 'light' : 'dark') as Theme;
+    return (localStorage.getItem('carp-theme') as Theme) || 'dark';
   });
-
   useEffect(() => {
+    localStorage.setItem('carp-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
-
-  const toggleTheme = useCallback(() => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  }, []);
-
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   return { theme, toggleTheme, isDark: theme === 'dark' };
 }

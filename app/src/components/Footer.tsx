@@ -1,24 +1,12 @@
+import { MapPin, Heart } from 'lucide-react';
+
 export default function Footer() {
   return (
-    <footer
-      className="shrink-0 py-4 px-6 md:px-10"
-      style={{
-        background: 'var(--nav-bg)',
-        backdropFilter: 'blur(20px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-        borderTop: '1px solid var(--glass-border)',
-        borderRadius: '16px 16px 0 0',
-      }}
-    >
-      <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:justify-center sm:gap-2">
-        <span className="text-[11px] font-semibold tracking-wide" style={{ color: 'var(--text-secondary)' }}>
-          CARP &ndash; Climate &amp; Air Research Platform
-        </span>
-        <span className="hidden sm:inline text-[11px]" style={{ color: 'var(--text-muted)' }}>&middot;</span>
-        <span className="text-[10px] font-medium tracking-wide" style={{ color: 'var(--text-muted)' }}>
-          Developed by BSCpE 3C Students 2026
-        </span>
-      </div>
+    <footer className="relative z-10 shrink-0 border-t py-4 text-center" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--tile-border)' }}>
+      <p className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+        <MapPin className="mr-1 inline h-3 w-3" style={{ color: 'var(--primary)' }} />
+        CARP <span className="mx-1">&middot;</span> Climate & Air Research Platform <span className="mx-1">&middot;</span> Developed by BSCpE 3C Students 2026 <Heart className="ml-1 inline h-3 w-3 text-red-400" />
+      </p>
     </footer>
   );
 }

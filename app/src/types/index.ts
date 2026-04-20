@@ -2,10 +2,6 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  password?: string;
-  region?: string;
-  city?: string;
-  location?: string;
   avatar?: string;
   authProvider?: string;
 }
@@ -13,7 +9,6 @@ export interface User {
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading?: boolean;
 }
 
 export interface WeatherCurrent {
@@ -23,82 +18,61 @@ export interface WeatherCurrent {
   uvIndex: number;
   precipitation: number;
   weatherCode: number;
-  condition?: string;
-  feelsLike?: number;
-  pressure?: number;
-  visibility?: number;
-}
-
-export interface DailyForecast {
-  date: string;
-  dayName: string;
-  maxTemp: number;
-  minTemp: number;
-  weatherCode: number;
-  high?: number;
-  low?: number;
-  precipitation?: number;
-}
-
-export interface HourlyData {
-  time: string[];
-  temperature: number[];
-  humidity: number[];
-  uvIndex: number[];
-  precipitation: number[];
+  pressure: number;
+  visibility: number;
+  cloudCover: number;
+  apparentTemperature: number;
+  windDirection: number;
 }
 
 export interface HourlyForecast {
   time: string;
   temperature: number;
-  humidity: number;
-  uvIndex: number;
-  precipitation: number;
+  weatherCode: number;
+  precipitationProbability: number;
+}
+
+export interface DailyForecast {
+  time: string;
+  maxTemp: number;
+  minTemp: number;
+  weatherCode: number;
+  precipitationProbability: number;
 }
 
 export interface WeatherData {
   current: WeatherCurrent;
+  hourly: HourlyForecast[];
   daily: DailyForecast[];
-  hourly: HourlyData;
-  temperature?: number;
-  humidity?: number;
-  windSpeed?: number;
-  uvIndex?: number;
-  precipitation?: number;
-  condition?: string;
-  feelsLike?: number;
-  pressure?: number;
-  visibility?: number;
+}
+
+export interface WeatherAlert {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  severity: string;
+  timestamp: string;
+  location: string;
 }
 
 export interface CountryData {
-  country: string;
-  region: string;
-  city: string;
-  lat: number;
-  lon: number;
-  pm25?: number | null;
-}
-
-export interface Country {
   name: string;
   code: string;
   capital: string;
-  region: string;
-  population: number;
   flag: string;
+  population: number;
   lat: number;
-  lng: number;
+  lon: number;
+  region?: string;
 }
 
-export interface City {
+export interface PhCity {
   name: string;
-  country: string;
-  countryCode: string;
+  province: string;
   region: string;
   lat: number;
-  lng: number;
-  population?: number;
+  lon: number;
 }
 
 export interface NewsArticle {
@@ -107,13 +81,7 @@ export interface NewsArticle {
   thumbnail: string;
   pubDate: string;
   description: string;
-  // Aliases for different component usage
-  url?: string;
-  imageUrl?: string;
-  publishedAt?: string;
-  excerpt?: string;
   source?: string;
 }
 
 export type Theme = 'dark' | 'light';
-export type PageId = 'dashboard' | 'map' | 'countries' | 'compare' | 'analytics' | 'trends' | 'alerts' | 'news' | 'about' | 'profile' | 'settings' | 'security';

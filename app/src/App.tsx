@@ -1,15 +1,15 @@
-import { Routes, Route, Navigate } from 'react-router';
-import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { useLocation } from '@/hooks/useLocation';
 import Layout from '@/components/Layout';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
 import LiveMap from '@/pages/LiveMap';
+import AirQuality from '@/pages/AirQuality';
 import Countries from '@/pages/Countries';
 import Compare from '@/pages/Compare';
 import Analytics from '@/pages/Analytics';
@@ -22,35 +22,43 @@ import Settings from '@/pages/Settings';
 import Security from '@/pages/Security';
 
 export default function App() {
-  const { theme, toggleTheme } = useTheme();
   const auth = useAuth();
-
-  useEffect(() => {
-    auth.checkAuth();
-  }, []);
+  const theme = useTheme();
+  const location = useLocation();
 
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login login={auth.login} />} />
+      <Route path="/register" element={<Register register={auth.register} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={auth.isAuthenticated ? <Layout theme={theme} toggleTheme={toggleTheme} auth={auth} /> : <Navigate to="/login" replace />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/map" element={<LiveMap />} />
+      <Route element={<Layout user={auth.user} logout={auth.logout} current={location.current} />}>
+        <Route path="/dashboard" element={<Dashboard
+          current={location.current}
+          locations={location.locations}
+          selectLocation={location.selectLocation}
+          addLocation={location.addLocation}
+        />} />
+        <Route path="/map" element={<LiveMap current={location.current} />} />
+        <Route path="/air-quality" element={<AirQuality current={location.current} />} />
         <Route path="/countries" element={<Countries />} />
         <Route path="/compare" element={<Compare />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/trends" element={<Trends />} />
-        <Route path="/alerts" element={<Alerts />} />
-        <Route path="/news" element={<News />} />
+        <Route path="/analytics" element={<Analytics current={location.current} />} />
+        <Route path="/trends" element={<Trends current={location.current} />} />
+        <Route path="/alerts" element={<Alerts current={location.current} />} />
+        <Route path="/news" element={<News current={location.current} />} />
         <Route path="/about" element={<About />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings theme={theme} toggleTheme={toggleTheme} />} />
+        <Route path="/profile" element={<Profile
+          user={auth.user}
+          updateProfile={auth.updateProfile}
+          locations={location.locations}
+          addLocation={location.addLocation}
+          removeLocation={location.removeLocation}
+          setDefaultLocation={location.setDefaultLocation}
+        />} />
+        <Route path="/settings" element={<Settings theme={theme.theme} toggleTheme={theme.toggleTheme} />} />
         <Route path="/security" element={<Security />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

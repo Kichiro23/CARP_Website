@@ -1,103 +1,107 @@
 import { useState, useEffect } from 'react';
-import { Thermometer, Droplets, Wind, Sun, Globe } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
-import { fetchWeather, COUNTRIES } from '@/services/weatherApi';
-import { Bar } from 'react-chartjs-2';
-import '@/lib/chart';
+import { BarChart3, RefreshCw, MapPin } from 'lucide-react';
+import { fetchWeather, fetchPM25, wmoEmoji } from '@/services/weatherApi';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement } from 'chart.js';
+import type { WeatherData } from '@/types';
+import type { SavedLocation } from '@/hooks/useLocation';
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement);
 
-export default function Analytics() {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  const [data, setData] = useState<Record<string, { temp: number; humidity: number; wind: number; uv: number }>>({});
+interface Props { current: SavedLocation; }
+
+export default function Analytics({ current }: Props) {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [pm25, setPm25] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    async function load() {
-      const results: Record<string, { temp: number; humidity: number; wind: number; uv: number }> = {};
-      await Promise.all(COUNTRIES.slice(0, 12).map(async (c) => {
-        const w = await fetchWeather(c.lat, c.lon);
-        if (w) results[c.city] = { temp: w.current.temperature, humidity: w.current.humidity, wind: w.current.windSpeed, uv: w.current.uvIndex };
-      }));
-      setData(results); setLoading(false);
-    }
-    load();
-  }, []);
-
-  const cities = Object.keys(data);
-  const chartOpts = {
-    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b', font: { size: 10 }, maxTicksLimit: 8 }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } },
-      y: { ticks: { color: isDark ? '#9a9da8' : '#5a5d6b' }, grid: { color: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' } },
-    },
+  const load = async () => {
+    setLoading(true); setError('');
+    try {
+      const [w, p] = await Promise.all([
+        fetchWeather(current.lat, current.lng),
+        fetchPM25(current.lat, current.lng),
+      ]);
+      setWeather(w); setPm25(p);
+      if (!w) setError('Could not load data.');
+    } catch { setError('Failed to load data.'); }
+    setLoading(false);
   };
-  const temps = cities.map((c) => data[c].temp);
-  const avgTemp = temps.length ? (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1) : '0';
-  const hottest = temps.length ? cities[temps.indexOf(Math.max(...temps))] : '-';
-  const windArr = cities.map((c) => data[c].wind);
-  const windiest = windArr.length ? cities[windArr.indexOf(Math.max(...windArr))] : '-';
+  useEffect(() => { load(); }, [current.lat, current.lng]);
 
-  if (loading) return <div className="flex h-[60vh] items-center justify-center"><div className="spinner" /></div>;
+  const barOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { x: { ticks: { color: '#9a9da8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+              y: { ticks: { color: '#9a9da8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } };
+
+  const weatherConditionCounts = () => {
+    if (!weather) return [0, 0, 0, 0];
+    const codes = weather.daily.map(d => d.weatherCode);
+    return [codes.filter(c => c <= 1).length, codes.filter(c => c >= 2 && c <= 48).length, codes.filter(c => c >= 51 && c <= 82).length, codes.filter(c => c >= 95).length];
+  };
+
+  if (loading) return (
+    <div>
+      <div className="mb-4"><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Analytics</h1><div className="skeleton mt-1 h-4 w-48" /></div>
+      <div className="grid-tiles-2">{[1,2,3,4].map(i => <div key={i} className="tile"><div className="skeleton h-[160px] w-full" /></div>)}</div>
+    </div>
+  );
+
+  if (error || !weather) return (
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-2">
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{error || 'No data available'}</p>
+      <button onClick={load} className="glass-btn px-4 py-2 text-xs">Retry</button>
+    </div>
+  );
+
+  const temps = weather.daily.slice(0, 7);
+  const conditionCounts = weatherConditionCounts();
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Analytics</h1>
-        <p className="mt-0.5 text-xs" style={{ color: 'var(--text-secondary)' }}>Global weather analytics across {cities.length} cities</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div><h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Analytics</h1><p className="text-xs" style={{ color: 'var(--text-secondary)' }}><MapPin className="mr-1 inline h-3 w-3" style={{ color: 'var(--primary)' }} />{current.name}, {current.country}</p></div>
+        <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Refresh</button>
       </div>
 
       <div className="grid-tiles-4">
-        {[
-          { label: 'Avg Temp', value: `${avgTemp}C`, icon: Thermometer, color: 'var(--primary)' },
-          { label: 'Avg Humidity', value: `${cities.length ? Math.round(cities.reduce((s, c) => s + data[c].humidity, 0) / cities.length) : 0}%`, icon: Droplets, color: '#3b82f6' },
-          { label: 'Hottest City', value: hottest, icon: Sun, color: '#f59e0b' },
-          { label: 'Windiest', value: windiest, icon: Wind, color: '#10b981' },
-        ].map((card) => (
-          <div key={card.label} className="tile">
-            <div className="tile-icon" style={{ background: card.color + '15' }}>
-              <card.icon className="h-4 w-4" style={{ color: card.color }} />
-            </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{card.label}</p>
-            <p className="mt-1 text-lg font-bold truncate" style={{ color: 'var(--text)' }}>{card.value}</p>
-          </div>
-        ))}
+        <div className="tile text-center"><BarChart3 className="mx-auto mb-1 h-5 w-5" style={{ color: 'var(--primary)' }} /><p className="text-xl font-bold" style={{ color: 'var(--text)' }}>{weather.current.temperature}C</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Current</p></div>
+        <div className="tile text-center"><p className="text-xl font-bold text-blue-400">{weather.current.humidity}%</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Humidity</p></div>
+        <div className="tile text-center"><p className="text-xl font-bold text-emerald-400">{weather.current.windSpeed}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Wind km/h</p></div>
+        <div className="tile text-center"><p className="text-xl font-bold" style={{ color: pm25 !== null ? (pm25 <= 35 ? '#5CB85C' : '#F0AD4E') : 'var(--text-muted)' }}>{pm25 ?? '--'}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>PM2.5</p></div>
       </div>
 
       <div className="grid-tiles-2">
-        {[
-          { label: 'Temperature', color: '#EA9D63', data: temps },
-          { label: 'Humidity', color: '#3b82f6', data: cities.map((c) => data[c].humidity) },
-          { label: 'Wind Speed', color: '#10b981', data: cities.map((c) => data[c].wind) },
-          { label: 'UV Index', color: '#f59e0b', data: cities.map((c) => data[c].uv) },
-        ].map((c) => (
-          <div key={c.label} className="tile">
-            <h3 className="tile-title">{c.label} by City</h3>
-            <div className="h-[180px]">
-              <Bar data={{ labels: cities, datasets: [{ data: c.data, backgroundColor: c.color + '60', borderColor: c.color, borderWidth: 1, borderRadius: 5 }] }} options={chartOpts} />
-            </div>
+        <div className="tile">
+          <h3 className="tile-title">7-Day Temperature Range</h3>
+          <div className="h-[180px]">
+            <Bar data={{ labels: temps.map(t => new Date(t.time).toLocaleDateString('en', { weekday: 'short' })),
+              datasets: [
+                { label: 'Max', data: temps.map(t => t.maxTemp), backgroundColor: '#EA9D6390', borderRadius: 6, borderSkipped: false as any },
+                { label: 'Min', data: temps.map(t => t.minTemp), backgroundColor: '#3b82f690', borderRadius: 6, borderSkipped: false as any },
+              ] }} options={{ ...barOpts, plugins: { legend: { display: true, labels: { color: '#9a9da8', font: { size: 10 } } } } }} />
           </div>
-        ))}
+        </div>
+        <div className="tile">
+          <h3 className="tile-title">Weather Conditions (7 Days)</h3>
+          <div className="mx-auto h-[180px] max-w-[200px]">
+            <Doughnut data={{ labels: ['Clear', 'Cloudy', 'Rain', 'Storm'],
+              datasets: [{ data: conditionCounts, backgroundColor: ['#F0AD4E', '#A2B7C7', '#3b82f6', '#9B59B6'], borderWidth: 0, hoverOffset: 4 }] }}
+              options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9a9da8', font: { size: 10 }, padding: 10 } } } }} />
+          </div>
+        </div>
       </div>
 
-      <div className="tile !p-0 overflow-hidden">
-        <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--tile-border)' }}>
-          <h3 className="tile-title !mb-0">City Data</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-              {['City', 'Temp', 'Humidity', 'Wind', 'UV'].map((h) => <th key={h} className="px-5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--primary)' }}>{h}</th>)}
-            </tr></thead>
-            <tbody>{cities.map((city) => (
-              <tr key={city} className="border-b last:border-0 hover:bg-[var(--primary)]/5 transition-colors" style={{ borderColor: 'var(--tile-border)' }}>
-                <td className="px-5 py-2.5"><div className="flex items-center gap-2 min-w-0"><Globe className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--primary)' }} /><span className="text-xs font-medium truncate" style={{ color: 'var(--text)' }}>{city}</span></div></td>
-                <td className="px-5 py-2.5 text-xs font-bold whitespace-nowrap" style={{ color: 'var(--primary)' }}>{data[city].temp}C</td>
-                <td className="px-5 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{data[city].humidity}%</td>
-                <td className="px-5 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{data[city].wind} km/h</td>
-                <td className="px-5 py-2.5 text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{data[city].uv}</td>
-              </tr>
-            ))}</tbody>
-          </table>
+      <div className="tile">
+        <h3 className="tile-title">Weekly Forecast Summary</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {weather.daily.slice(0, 7).map((d, i) => (
+            <div key={i} className="rounded-xl border p-3 text-center" style={{ borderColor: 'var(--tile-border)', background: 'rgba(255,255,255,0.02)' }}>
+              <p className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>{new Date(d.time).toLocaleDateString('en', { weekday: 'short' })}</p>
+              <p className="my-1 text-xl">{wmoEmoji(d.weatherCode)}</p>
+              <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>{d.maxTemp}C</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{d.precipitationProbability}% rain</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
