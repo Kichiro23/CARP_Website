@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowRight, ArrowLeft, User, Mail, Lock } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import CarpLogo from '@/components/CarpLogo';
 import Footer from '@/components/Footer';
 import VideoBackground from '@/components/VideoBackground';
 
-export default function Register({ register }: { register: (n: string, e: string, p: string) => Promise<void> }) {
+interface Props {
+  register: (n: string, e: string, p: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
+}
+
+export default function Register({ register, googleLogin }: Props) {
   const nav = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,6 +19,7 @@ export default function Register({ register }: { register: (n: string, e: string
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +27,22 @@ export default function Register({ register }: { register: (n: string, e: string
     if (!name || !email || !password || !confirm) { setError('Please fill in all fields'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    setLoading(true);
     try { await register(name, email, password); nav('/dashboard'); }
     catch (err: any) { setError(err.message || 'Registration failed'); }
+    setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      nav('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Google sign up failed');
+    }
+    setLoading(false);
   };
 
   return (
@@ -38,6 +59,21 @@ export default function Register({ register }: { register: (n: string, e: string
             <div className="mb-4"><Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-70" style={{ color: 'var(--text-secondary)' }}><ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In</Link></div>
             <div className="mb-5 text-center"><h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Create Account</h2>
             <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Join the climate research community</p></div>
+
+            <div className="mb-4">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign up failed')}
+                size="large"
+                width="100%"
+                text="signup_with"
+                shape="rectangular"
+                theme="filled_black"
+              />
+            </div>
+
+            <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /><span className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-muted)' }}>or</span><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /></div>
+
             <form onSubmit={handleSubmit} className="space-y-3">
               <div><label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Full Name</label>
                 <div className="relative"><User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
@@ -53,8 +89,9 @@ export default function Register({ register }: { register: (n: string, e: string
                 <div><label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Confirm</label>
                   <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="******" className="glass-input" /></div></div>
               {error && <div className="rounded-lg bg-red-500/10 px-4 py-2.5 text-center text-xs text-red-400 break-words">{error}</div>}
-              <button type="submit" className="glass-btn w-full flex items-center justify-center gap-2 py-3">Create Account <ArrowRight className="h-4 w-4" /></button>
+              <button type="submit" disabled={loading} className="glass-btn w-full flex items-center justify-center gap-2 py-3">{loading ? 'Creating account...' : <>Create Account <ArrowRight className="h-4 w-4" /></>}</button>
             </form>
+            <p className="mt-4 text-center text-xs" style={{ color: 'var(--text-secondary)' }}>Already have an account? <Link to="/login" className="font-bold" style={{ color: 'var(--primary)' }}>Sign In</Link></p>
           </div>
         </div>
       </div>

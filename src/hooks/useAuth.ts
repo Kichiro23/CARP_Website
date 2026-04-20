@@ -1,44 +1,133 @@
-import { useState, useCallback } from 'react';
-import type { User, AuthState } from '@/types';
+import { useState, useCallback, useEffect } from 'react';
+import * as api from '@/services/api';
+import type { User } from '@/types';
 
-const SK = 'carp_session';
-const UK = 'carp_users';
-
-function getSession(): User | null {
-  try { const r = localStorage.getItem(SK); if (!r || r === 'null') return null; const p = JSON.parse(r); return p?.email ? p : null; } catch { return null; }
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
 }
-function saveSession(u: User | null) { if (u) localStorage.setItem(SK, JSON.stringify(u)); else localStorage.removeItem(SK); }
-function getLocalUsers(): any[] { try { const r = localStorage.getItem(UK); if (!r) return []; const p = JSON.parse(r); return Array.isArray(p) ? p : []; } catch { return []; } }
-function saveLocalUser(n: string, e: string, p: string) { const u = getLocalUsers(); u.push({ name: n, email: e.toLowerCase(), password: p }); localStorage.setItem(UK, JSON.stringify(u)); }
-function findLocalUser(e: string, pw?: string) { const u = getLocalUsers(); const f = u.find((x: any) => x.email === e.toLowerCase()); if (!f) return null; if (pw && f.password !== pw) return null; return f; }
-function makeUser(n: string, e: string): User { return { id: Date.now(), name: n, email: e, avatar: '', authProvider: 'local' }; }
+
+function getLocalUser(): User | null {
+  try {
+    const raw = localStorage.getItem('carp_session');
+    if (!raw || raw === 'null') return null;
+    const p = JSON.parse(raw);
+    return p?.email ? p : null;
+  } catch { return null; }
+}
+
+function saveLocalUser(u: User | null) {
+  if (u) localStorage.setItem('carp_session', JSON.stringify(u));
+  else localStorage.removeItem('carp_session');
+}
 
 export function useAuth() {
-  const [state, setState] = useState<AuthState>(() => ({ user: getSession(), isAuthenticated: !!getSession() }));
+  const [state, setState] = useState<AuthState>(() => ({
+    user: getLocalUser(),
+    isAuthenticated: !!getLocalUser(),
+    loading: true,
+  }));
+
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('carp_token');
+      if (!token) {
+        setState(p => ({ ...p, loading: false }));
+        return;
+      }
+      try {
+        const data = await api.getMe();
+        if (data?.user) {
+          const user: User = {
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            avatar: data.user.avatar || '',
+            authProvider: data.user.authProvider,
+          };
+          saveLocalUser(user);
+          setState({ user, isAuthenticated: true, loading: false });
+        } else {
+          api.logout();
+          setState({ user: null, isAuthenticated: false, loading: false });
+        }
+      } catch {
+        api.logout();
+        setState({ user: null, isAuthenticated: false, loading: false });
+      }
+    };
+    checkAuth();
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = findLocalUser(email, password);
-    if (!u) throw new Error('Invalid email or password');
-    const user = makeUser(u.name, u.email);
-    saveSession(user); setState({ user, isAuthenticated: true });
+    const data = await api.login(email, password);
+    const user: User = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      avatar: data.user.avatar || '',
+      authProvider: data.user.authProvider,
+    };
+    saveLocalUser(user);
+    setState({ user, isAuthenticated: true, loading: false });
+    return data;
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    if (findLocalUser(email)) throw new Error('Email already registered');
-    saveLocalUser(name, email, password);
-    const user = makeUser(name, email);
-    saveSession(user); setState({ user, isAuthenticated: true });
+    const data = await api.register(name, email, password);
+    const user: User = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      avatar: data.user.avatar || '',
+      authProvider: data.user.authProvider,
+    };
+    saveLocalUser(user);
+    setState({ user, isAuthenticated: true, loading: false });
+    return data;
   }, []);
 
-  const googleLogin = useCallback(async (d: { googleId: string; name: string; email: string; picture?: string }) => {
-    const user = makeUser(d.name, d.email);
-    user.avatar = d.picture || ''; user.authProvider = 'google';
-    saveSession(user); setState({ user, isAuthenticated: true });
+  const googleLogin = useCallback(async (credential: string) => {
+    const data = await api.googleAuth(credential);
+    const user: User = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      avatar: data.user.avatar || '',
+      authProvider: 'google',
+    };
+    saveLocalUser(user);
+    setState({ user, isAuthenticated: true, loading: false });
   }, []);
 
-  const logout = useCallback(() => { saveSession(null); setState({ user: null, isAuthenticated: false }); }, []);
-  const updateProfile = useCallback((u: Partial<User>) => { setState(p => { if (!p.user) return p; const up = { ...p.user, ...u }; saveSession(up); return { ...p, user: up }; }); }, []);
-  const checkAuth = useCallback(() => { const u = getSession(); setState({ user: u, isAuthenticated: !!u }); }, []);
+  const logout = useCallback(() => {
+    api.logout();
+    setState({ user: null, isAuthenticated: false, loading: false });
+  }, []);
 
-  return { ...state, login, register, googleLogin, logout, updateProfile, checkAuth };
+  const updateProfile = useCallback(async (updates: Partial<User>) => {
+    await api.updateProfile(updates);
+    setState(p => {
+      if (!p.user) return p;
+      const updated = { ...p.user, ...updates };
+      saveLocalUser(updated);
+      return { ...p, user: updated };
+    });
+  }, []);
+
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    return api.changePassword(currentPassword, newPassword);
+  }, []);
+
+  return {
+    ...state,
+    login,
+    register,
+    googleLogin,
+    logout,
+    updateProfile,
+    changePassword,
+  };
 }

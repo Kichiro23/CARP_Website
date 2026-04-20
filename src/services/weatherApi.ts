@@ -120,13 +120,58 @@ export function pm25Class(pm: number): string {
   return 'bg-purple-500/15 text-purple-400';
 }
 
+// Weather icons using Lucide icon names for reliable rendering
+export function wmoIcon(code: number): string {
+  const map: Record<number, string> = {
+    0: 'Sun', 1: 'Sun', 2: 'CloudSun', 3: 'Cloud',
+    45: 'CloudFog', 48: 'CloudFog',
+    51: 'CloudDrizzle', 53: 'CloudDrizzle', 55: 'CloudDrizzle',
+    61: 'CloudRain', 63: 'CloudRain', 65: 'CloudRain',
+    71: 'Snowflake', 73: 'Snowflake', 75: 'Snowflake',
+    80: 'CloudRain', 81: 'CloudRain', 82: 'CloudLightning',
+    95: 'CloudLightning', 96: 'CloudLightning', 99: 'CloudLightning',
+  };
+  return map[code] || 'Cloud';
+}
+
+// Emoji using proper ES6 Unicode escapes (\u{XXXXX}) for chars above U+FFFF
 export function wmoEmoji(code: number): string {
-  const map: Record<number, string> = { 0: '\u2600\uFE0F', 1: '\u1F324\uFE0F', 2: '\u26C5', 3: '\u2601\uFE0F', 45: '\u1F32B\uFE0F', 48: '\u1F32B\uFE0F', 51: '\u1F326\uFE0F', 53: '\u1F327\uFE0F', 55: '\u1F327\uFE0F', 61: '\u1F327\uFE0F', 63: '\u1F327\uFE0F', 65: '\u1F327\uFE0F', 71: '\u1F328\uFE0F', 73: '\u1F328\uFE0F', 75: '\u1F328\uFE0F', 80: '\u1F326\uFE0F', 81: '\u1F327\uFE0F', 82: '\u26C8\uFE0F', 95: '\u26C8\uFE0F', 96: '\u26C8\uFE0F', 99: '\u26C8\uFE0F' };
-  return map[code] || '\u1F321\uFE0F';
+  const map: Record<number, string> = {
+    0: '\u{2600}\u{FE0F}',     // Clear
+    1: '\u{1F324}\u{FE0F}',   // Mainly clear
+    2: '\u{26C5}',             // Partly cloudy
+    3: '\u{2601}\u{FE0F}',    // Overcast
+    45: '\u{1F32B}\u{FE0F}',  // Fog
+    48: '\u{1F32B}\u{FE0F}',  // Rime fog
+    51: '\u{1F326}\u{FE0F}',  // Drizzle
+    53: '\u{1F327}\u{FE0F}',  // Drizzle
+    55: '\u{1F327}\u{FE0F}',  // Drizzle
+    61: '\u{1F327}\u{FE0F}',  // Rain
+    63: '\u{1F327}\u{FE0F}',  // Rain
+    65: '\u{1F327}\u{FE0F}',  // Heavy rain
+    71: '\u{1F328}\u{FE0F}',  // Snow
+    73: '\u{1F328}\u{FE0F}',  // Snow
+    75: '\u{1F328}\u{FE0F}',  // Heavy snow
+    80: '\u{1F326}\u{FE0F}',  // Showers
+    81: '\u{1F327}\u{FE0F}',  // Showers
+    82: '\u{26C8}\u{FE0F}',   // Heavy showers
+    95: '\u{26C8}\u{FE0F}',   // Thunderstorm
+    96: '\u{26C8}\u{FE0F}',   // Thunderstorm
+    99: '\u{26C8}\u{FE0F}',   // Thunderstorm
+  };
+  return map[code] || '\u{1F321}\u{FE0F}';
 }
 
 export function wmoLabel(code: number): string {
-  const map: Record<number, string> = { 0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 45: 'Foggy', 48: 'Rime Fog', 51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle', 61: 'Rain', 63: 'Rain', 65: 'Heavy Rain', 71: 'Snow', 73: 'Snow', 75: 'Heavy Snow', 80: 'Showers', 81: 'Showers', 82: 'Heavy Showers', 95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm' };
+  const map: Record<number, string> = {
+    0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+    45: 'Foggy', 48: 'Rime Fog',
+    51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle',
+    61: 'Rain', 63: 'Rain', 65: 'Heavy Rain',
+    71: 'Snow', 73: 'Snow', 75: 'Heavy Snow',
+    80: 'Showers', 81: 'Showers', 82: 'Heavy Showers',
+    95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm',
+  };
   return map[code] || 'Unknown';
 }
 

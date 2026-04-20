@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useLocation } from '@/hooks/useLocation';
@@ -7,6 +8,7 @@ import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
 import LiveMap from '@/pages/LiveMap';
 import AirQuality from '@/pages/AirQuality';
@@ -21,17 +23,20 @@ import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Security from '@/pages/Security';
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 export default function App() {
   const auth = useAuth();
   const theme = useTheme();
   const location = useLocation();
 
-  return (
+  const app = (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login login={auth.login} />} />
-      <Route path="/register" element={<Register register={auth.register} />} />
+      <Route path="/login" element={<Login login={auth.login} googleLogin={auth.googleLogin} />} />
+      <Route path="/register" element={<Register register={auth.register} googleLogin={auth.googleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<Layout user={auth.user} logout={auth.logout} current={location.current} />}>
         <Route path="/dashboard" element={<Dashboard
           current={location.current}
@@ -61,4 +66,15 @@ export default function App() {
       </Route>
     </Routes>
   );
+
+  // Only wrap with GoogleOAuthProvider if we have a client ID
+  if (GOOGLE_CLIENT_ID) {
+    return (
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        {app}
+      </GoogleOAuthProvider>
+    );
+  }
+
+  return app;
 }
