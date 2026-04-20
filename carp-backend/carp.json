@@ -1,0 +1,107 @@
+{
+  "users": [
+    {
+      "id": 1776635710498,
+      "name": "Updated",
+      "email": "test@test.com",
+      "password": "$2a$12$FxqSbCuIxzNVTdLi2hHQu.kFNdd6c5Sb9xBdaQ86f54E/Bys1Jj..",
+      "avatar": null,
+      "auth_provider": "local",
+      "google_id": null,
+      "city": "Cebu",
+      "country": "Philippines",
+      "created_at": "2026-04-19T21:55:10.498Z"
+    },
+    {
+      "id": 1776635851146,
+      "name": "G User",
+      "email": "guser@gmail.com",
+      "password": null,
+      "avatar": "https://pic.jpg",
+      "auth_provider": "google",
+      "google_id": "g-777",
+      "city": null,
+      "country": null,
+      "created_at": "2026-04-19T21:57:31.146Z"
+    },
+    {
+      "id": 1776639095776,
+      "name": "Forgot Test",
+      "email": "forgot@test.com",
+      "password": "$2a$12$U8JX5X3Pcpt8ob/CslK6peJC.rYdvXeebqGqwotQKMIWXCcOk25Ee",
+      "avatar": null,
+      "auth_provider": "local",
+      "google_id": null,
+      "city": null,
+      "country": null,
+      "created_at": "2026-04-19T22:51:35.776Z"
+    }
+  ],
+  "refreshTokens": [
+    {
+      "id": 1776635710539,
+      "user_id": 1776635710498,
+      "token": "2920fcb0e5414137024b6c08f760d24213252c8e7c2f99642adbde4aa46f0ddec61f0fafe422bc9b5e7ef0da5cb24170226203f34a1b209b27f4eceaf33c1ed2",
+      "expires_at": "2026-05-19T21:55:10.539Z",
+      "created_at": "2026-04-19T21:55:10.539Z"
+    },
+    {
+      "id": 1776635722863,
+      "user_id": 1776635710498,
+      "token": "34350ce4b77eb415e2a7d325a158592026b1922d6ffbdd830d3886299ff098073995839cc9f3ba3baf6bd001ab75884d0d05588e4f52f1942c58f3787a25ae6f",
+      "expires_at": "2026-05-19T21:55:22.863Z",
+      "created_at": "2026-04-19T21:55:22.863Z"
+    },
+    {
+      "id": 1776635827947,
+      "user_id": 1776635710498,
+      "token": "ecb02ca3010f2964e132b1f5dd6244d1c3d6c255ec8e31fb076c679cd5a309e96d0a8ddff7c7bd61d571f867dcafa8f8ac76776267625013815e6f2a37aeb00d",
+      "expires_at": "2026-05-19T21:57:07.947Z",
+      "created_at": "2026-04-19T21:57:07.947Z"
+    },
+    {
+      "id": 1776635847457,
+      "user_id": 1776635710498,
+      "token": "e69c9dec18e8961b6ef77c5b1456bc4b64ee3843be36215fd1ef80a53d88ef603d2df9c0cde9a3b7ed67ca23052b11be33cc31268a898a2456035bad7c6da87c",
+      "expires_at": "2026-05-19T21:57:27.457Z",
+      "created_at": "2026-04-19T21:57:27.457Z"
+    },
+    {
+      "id": 1776635850438,
+      "user_id": 1776635710498,
+      "token": "9312faf985d6eae58a59bea9cdaa779dbc83602944d7b528388116badfafda6c94f9fa0445db575a1390025bda93efa0f127cc50251079088cb89265b1e3481a",
+      "expires_at": "2026-05-19T21:57:30.438Z",
+      "created_at": "2026-04-19T21:57:30.438Z"
+    },
+    {
+      "id": 1776635851183,
+      "user_id": 1776635851146,
+      "token": "c3282bf7723ad821e368048bfd4762bfda17d92ffa5a956e2805c257831190a39aa0c633ec06a1ec543d1b4fdc207a37269481550b4cb493c8fe77902dd5dea6",
+      "expires_at": "2026-05-19T21:57:31.183Z",
+      "created_at": "2026-04-19T21:57:31.183Z"
+    },
+    {
+      "id": 1776635851228,
+      "user_id": 1776635851146,
+      "token": "a4d522bfb485b7df7f43399ad4d42e91105a58ce04912834f64741f75c003e96c121ac866139e59c3aff4976f9389847fbf22e933ad8bcacd0ef5269ce7562b8",
+      "expires_at": "2026-05-19T21:57:31.228Z",
+      "created_at": "2026-04-19T21:57:31.228Z"
+    },
+    {
+      "id": 1776639095820,
+      "user_id": 1776639095776,
+      "token": "a888c91ea382ab069fedf1a47a9ce3cd6ea9522fc234f8041f922608204fef06dc876ad9052a807705f3a00c618722c6b69863230363a5da3884d0a86797965f",
+      "expires_at": "2026-05-19T22:51:35.820Z",
+      "created_at": "2026-04-19T22:51:35.820Z"
+    },
+    {
+      "id": 1776639105251,
+      "user_id": 1776639095776,
+      "token": "b824bafa6530d26f6749e153ff4efc7faed04ca72a1542a745859360afdb0c63b8af2bd90ab2831397ad7b34ff9b8574539597f37d8b49d278a8c144c5a0c287",
+      "expires_at": "2026-05-19T22:51:45.251Z",
+      "created_at": "2026-04-19T22:51:45.251Z"
+    }
+  ],
+  "savedCities": [],
+  "resetTokens": []
+}

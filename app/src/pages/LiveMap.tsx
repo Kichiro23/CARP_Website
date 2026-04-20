@@ -1,0 +1,118 @@
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapPin, RefreshCw, Navigation } from 'lucide-react';
+import { fetchWeather, fetchPM25, wmoEmoji, wmoLabel, aqiColor } from '@/services/weatherApi';
+import type { SavedLocation } from '@/hooks/useLocation';
+import type { WeatherData } from '@/types';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const aqiMarkerColors = ['#5CB85C', '#F0AD4E', '#E87040', '#D9534F', '#9B59B6'];
+
+function createMarkerIcon(pm25: number | null) {
+  const color = pm25 !== null ? aqiMarkerColors[Math.min(4, Math.max(0, pm25 <= 12 ? 0 : pm25 <= 35 ? 1 : pm25 <= 55 ? 2 : pm25 <= 150 ? 3 : 4))] : '#6b6f7a';
+  return L.divIcon({
+    className: '',
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    html: `<div style="width:36px;height:36px;border-radius:50%;background:${color}20;border:2.5px solid ${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#EAEFEF;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.3);">${pm25 !== null ? Math.round(pm25) : '?'}</div>`,
+  });
+}
+
+function MapController({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => { map.setView([lat, lng], 10); }, [lat, lng, map]);
+  return null;
+}
+
+const MAJOR_CITIES = [
+  'Manila, Philippines', 'Tokyo, Japan', 'New York, USA', 'London, UK',
+  'Singapore', 'Dubai, UAE', 'Sydney, Australia', 'Paris, France',
+  'Berlin, Germany', 'Mumbai, India', 'Beijing, China', 'Seoul, South Korea',
+  'Bangkok, Thailand', 'Jakarta, Indonesia', 'Cairo, Egypt', 'Nairobi, Kenya',
+];
+
+interface CityMarker { name: string; lat: number; lng: number; weather: WeatherData | null; pm25: number | null; }
+
+interface Props { current: SavedLocation; }
+
+export default function LiveMap({ current }: Props) {
+  const [markers, setMarkers] = useState<CityMarker[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [center, setCenter] = useState<[number, number]>([current.lat, current.lng]);
+
+  useEffect(() => { setCenter([current.lat, current.lng]); }, [current.lat, current.lng]);
+
+  const load = async () => {
+    setLoading(true);
+    const results: CityMarker[] = [];
+    await Promise.all(MAJOR_CITIES.map(async (city) => {
+      try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+        const geoData = await geoRes.json();
+        if (!geoData.results?.[0]) return;
+        const r = geoData.results[0];
+        const [w, pm25] = await Promise.all([fetchWeather(r.latitude, r.longitude), fetchPM25(r.latitude, r.longitude)]);
+        results.push({ name: r.name, lat: r.latitude, lng: r.longitude, weather: w, pm25 });
+      } catch {}
+    }));
+    setMarkers(results);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const locateMe = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => setCenter([pos.coords.latitude, pos.coords.longitude]), () => {});
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col -m-4 md:-m-6">
+      <div className="shrink-0 p-4 md:p-6 pb-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Live Map</h1>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}><MapPin className="mr-1 inline h-3 w-3" style={{ color: 'var(--primary)' }} />{current.name} &middot; Global air quality stations</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={locateMe} className="glass-badge cursor-pointer"><Navigation className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Locate</button>
+            <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> {loading ? 'Loading...' : 'Refresh'}</button>
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          {['Good', 'Moderate', 'Unhealthy(S)', 'Unhealthy', 'Hazardous'].map((l, i) => (
+            <div key={l} className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full" style={{ background: aqiMarkerColors[i] }} /><span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{l}</span></div>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 mx-4 md:mx-6 mb-4 md:mb-6 min-h-[400px] rounded-xl overflow-hidden border" style={{ borderColor: 'var(--tile-border)' }}>
+        <MapContainer center={center} zoom={10} scrollWheelZoom style={{ height: '100%', width: '100%', background: '#1a1a2e' }}>
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <MapController lat={center[0]} lng={center[1]} />
+          <Marker position={[current.lat, current.lng]} icon={L.divIcon({
+            className: '', iconSize: [40, 40], iconAnchor: [20, 40],
+            html: `<div style="width:40px;height:40px;border-radius:50%;background:#EA9D6330;border:3px solid #EA9D63;display:flex;align-items:center;justify-content:center;font-size:16px;animation:pulse 2s infinite;">&#x1F4CD;</div>`,
+          })}>
+            <Popup><div className="min-w-[120px]"><p className="text-xs font-bold" style={{ color: '#EAEFEF' }}>{current.name}</p><p className="text-[10px]" style={{ color: '#9a9da8' }}>Your selected location</p></div></Popup>
+          </Marker>
+          {markers.map(m => (
+            <Marker key={m.name} position={[m.lat, m.lng]} icon={createMarkerIcon(m.pm25)}>
+              <Popup>
+                <div className="min-w-[140px]">
+                  <h4 className="text-xs font-bold mb-1" style={{ color: '#EAEFEF' }}>{m.name}</h4>
+                  {m.weather ? (
+                    <div className="space-y-0.5">
+                      <p className="text-[11px]" style={{ color: '#9a9da8' }}>{wmoEmoji(m.weather.current.weatherCode)} {m.weather.current.temperature}C | {m.weather.current.humidity}%</p>
+                      <p className="text-[11px]" style={{ color: m.pm25 !== null ? aqiColor(m.pm25) : '#9a9da8' }}>PM2.5: {m.pm25 ?? '--'} &middot; {wmoLabel(m.weather.current.weatherCode)}</p>
+                    </div>
+                  ) : <p className="text-[10px]" style={{ color: '#6b6f7a' }}>No data</p>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+    </div>
+  );
+}
