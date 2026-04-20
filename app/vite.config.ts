@@ -6,7 +6,7 @@ export default defineConfig({
   base: '/CARP_Website/',
   plugins: [react()],
   server: {
-n    port: 3000,
+    port: 3000,
   },
   resolve: {
     alias: {
