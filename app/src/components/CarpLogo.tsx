@@ -6,7 +6,7 @@ interface CarpLogoProps {
 export default function CarpLogo({ size = 48, className = '' }: CarpLogoProps) {
   return (
     <img
-      src="/logo.png"
+      src="./logo.png"
       alt="CARP Logo"
       width={size}
       height={size}
