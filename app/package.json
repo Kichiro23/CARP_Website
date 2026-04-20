@@ -2,7 +2,7 @@
   "name": "carp-climate-platform",
   "private": true,
   "version": "1.0.0",
-  "homepage": "https://sedig.github.io/CARP_Website",
+  "homepage": "https://Kichiro23.github.io/CARP_Website",
   "type": "module",
   "scripts": {
     "dev": "vite",
