@@ -55,17 +55,18 @@ export default function Login({ login, googleLogin }: Props) {
             <div className="mb-6 text-center"><h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Sign In</h2>
             <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Access your CARP dashboard</p></div>
 
-            <div className="mb-4">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google login failed')}
-                size="large"
-                width="100%"
-                text="signin_with"
-                shape="rectangular"
-                theme="filled_black"
-              />
-            </div>
+            {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+              <div className="mb-4">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google login failed')}
+                  size="large"
+                  text="signin_with"
+                  shape="rectangular"
+                  theme="filled_black"
+                />
+              </div>
+            )}
 
             <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /><span className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-muted)' }}>or</span><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /></div>
 
