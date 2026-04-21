@@ -69,7 +69,7 @@ export function useAuth() {
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await api.login(email.trim(), password);
-    if (!data?.user) throw new Error('Invalid server response');
+    if (!data?.user) throw new Error(data?.message || 'Login failed. Please try again.');
     const user: User = {
       id: data.user.id,
       name: data.user.name,
@@ -85,7 +85,7 @@ export function useAuth() {
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const data = await api.register(name.trim(), email.trim(), password);
-    if (!data?.user) throw new Error('Invalid server response');
+    if (!data?.user) throw new Error(data?.message || 'Registration failed. Please try again.');
     const user: User = {
       id: data.user.id,
       name: data.user.name,
@@ -101,7 +101,7 @@ export function useAuth() {
 
   const googleLogin = useCallback(async (credential: string) => {
     const data = await api.googleAuth(credential);
-    if (!data?.user) throw new Error('Invalid server response');
+    if (!data?.user) throw new Error(data?.message || 'Google login failed. Please try again.');
     const user: User = {
       id: data.user.id,
       name: data.user.name,

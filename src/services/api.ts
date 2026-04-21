@@ -35,6 +35,10 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error(data?.message || text.slice(0, 200) || `Request failed (${res.status})`);
   }
 
+  if (data === null && text.trim().startsWith('<')) {
+    throw new Error('Backend not reachable. API returned HTML instead of JSON.');
+  }
+
   return data;
 }
 
