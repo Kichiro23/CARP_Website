@@ -1,5 +1,5 @@
 // CARP Backend API Service
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/$/, '');
+const API_BASE = 'https://weathercarp.com/api';
 
 // Helper to get auth token
 function getToken(): string | null {
