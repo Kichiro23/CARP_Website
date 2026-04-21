@@ -30,7 +30,7 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
-            <img src="./logo.png" alt="CARP" className="h-8 w-8 object-contain" />
+            <img src="/logo.png" alt="CARP" className="h-8 w-8 object-contain" />
             <span className="text-base font-bold truncate" style={{ color: 'var(--primary)' }}>CARP</span>
           </Link>
         </div>
@@ -71,7 +71,7 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
         </div>
       </header>
       {mobileOpen && (
-        <div className="fixed inset-0 top-[60px] z-40 p-4 md:hidden" style={{ background: 'rgba(19,19,31,0.96)', backdropFilter: 'blur(24px)' }}>
+        <div className="fixed inset-0 top-[60px] z-40 overflow-y-auto p-4 md:hidden" style={{ background: 'rgba(19,19,31,0.96)', backdropFilter: 'blur(24px)' }}>
           {links.map(l => (
             <Link key={l.path} to={l.path} onClick={() => setMobileOpen(false)} className="block py-3 text-sm font-medium border-b" style={{ color: loc.pathname === l.path ? '#EA9D63' : 'var(--text-secondary)', borderColor: 'var(--border)' }}>{l.label}</Link>
           ))}

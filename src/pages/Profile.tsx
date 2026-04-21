@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Camera, Save, MapPin, Star, Trash2, Check, Shield } from 'lucide-react';
 import CitySearch from '@/components/CitySearch';
@@ -42,6 +42,10 @@ export default function Profile({ user, updateProfile, locations, addLocation, r
   const [previewUrl, setPreviewUrl] = useState<string | null>(user?.avatar || null);
   const [uploadError, setUploadError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreviewUrl(user?.avatar || null);
+  }, [user?.avatar]);
 
   const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

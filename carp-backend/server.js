@@ -18,9 +18,13 @@ require('dotenv').config();
 // CONFIG
 // ============================================
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'carp-fallback-secret-change-me';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET not set in .env');
+  process.exit(1);
+}
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://weathercarp.com';
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://weathercarp.com').replace(/\/$/, '');
 
 // ============================================
 // EXPRESS APP
@@ -66,7 +70,7 @@ mongoose.connect(MONGODB_URI)
 // User Schema
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
+  email: { type: String, required: true, unique: true, lowercase: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
   password: { type: String, select: false },
   avatar: { type: String, default: '' },
   authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
@@ -91,6 +95,8 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const User = mongoose.model('User', userSchema);
 
@@ -143,6 +149,9 @@ app.post('/api/auth/register', async (req, res) => {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
     }
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
@@ -223,6 +232,12 @@ app.post('/api/auth/google', async (req, res) => {
     });
 
     const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google token payload' });
+    }
+    if (!payload.email_verified) {
+      return res.status(400).json({ success: false, message: 'Google email not verified' });
+    }
 
     let user = await User.findOne({ email: payload.email });
     if (!user) {
@@ -251,6 +266,7 @@ app.post('/api/auth/google', async (req, res) => {
         email: user.email,
         avatar: user.avatar,
         authProvider: user.authProvider,
+        defaultLocation: user.defaultLocation,
       },
     });
   } catch (err) {
@@ -266,30 +282,29 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      return res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
+      await user.save({ validateBeforeSave: false });
+
+      const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || 'CARP <noreply@weathercarp.com>',
+          to: user.email,
+          subject: 'CARP - Password Reset Request',
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><h2 style="color:#EA9D63;">CARP</h2><p>You requested a password reset.</p><a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#EA9D63,#d48952);color:white;padding:12px 24px;text-decoration:none;border-radius:12px;font-weight:bold;">Reset Password</a><p style="color:#6b6f7a;font-size:12px;margin-top:24px;">This link expires in 30 minutes.</p></div>`,
+        });
+      } catch (emailErr) {
+        console.error('Email send failed:', emailErr.message);
+        return res.status(500).json({ success: false, message: 'Failed to send reset email' });
+      }
     }
 
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
-    await user.save({ validateBeforeSave: false });
-
-    const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
-
-    // Send email
-    try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'CARP <noreply@weathercarp.com>',
-        to: user.email,
-        subject: 'CARP - Password Reset Request',
-        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"><h2 style="color:#EA9D63;">CARP</h2><p>You requested a password reset.</p><a href="${resetUrl}" style="display:inline-block;background:linear-gradient(135deg,#EA9D63,#d48952);color:white;padding:12px 24px;text-decoration:none;border-radius:12px;font-weight:bold;">Reset Password</a><p style="color:#6b6f7a;font-size:12px;margin-top:24px;">This link expires in 30 minutes.</p></div>`,
-      });
-    } catch (emailErr) {
-      console.error('Email send failed:', emailErr.message);
-    }
-
-    res.json({ success: true, message: 'Password reset email sent' });
+    res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -370,6 +385,7 @@ app.get('/api/auth/me', auth, async (req, res) => {
 app.get('/api/profile', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({
       success: true,
       user: {
@@ -394,7 +410,8 @@ app.put('/api/profile', auth, async (req, res) => {
     if (name) updates.name = name;
     if (avatar) updates.avatar = avatar;
 
-    const user = await User.findByIdAndUpdate(req.userId, { $set: updates }, { new: true });
+    const user = await User.findByIdAndUpdate(req.userId, { $set: updates }, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({
       success: true,
       user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
@@ -404,11 +421,33 @@ app.put('/api/profile', auth, async (req, res) => {
   }
 });
 
+// Upload Avatar
+app.post('/api/profile/avatar', auth, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image || typeof image !== 'string') {
+      return res.status(400).json({ success: false, message: 'Image is required' });
+    }
+    if (image.length > 2_000_000) {
+      return res.status(413).json({ success: false, message: 'Image too large' });
+    }
+    const user = await User.findByIdAndUpdate(req.userId, { avatar: image }, { new: true });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, avatar: user.avatar });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Change Password
 app.put('/api/profile/password', auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
     const user = await User.findById(req.userId).select('+password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     if (!user.password) {
       return res.status(400).json({ success: false, message: 'Cannot change password for Google accounts' });
@@ -463,7 +502,7 @@ app.post('/api/locations', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, country, lat, and lng are required' });
     }
 
-    const existing = await Location.findOne({ user: req.userId, name, country });
+    const existing = await Location.findOne({ user: req.userId, name, country, lat, lng });
     if (existing) {
       return res.status(400).json({ success: false, message: 'Location already saved' });
     }
@@ -478,6 +517,12 @@ app.post('/api/locations', auth, async (req, res) => {
       isDefault: count === 0,
     });
 
+    if (count === 0) {
+      await User.findByIdAndUpdate(req.userId, {
+        defaultLocation: { name, country, lat, lng }
+      });
+    }
+
     res.status(201).json({ success: true, location });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -487,8 +532,24 @@ app.post('/api/locations', auth, async (req, res) => {
 // Delete Location
 app.delete('/api/locations/:id', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid location ID' });
+    }
     const location = await Location.findOneAndDelete({ _id: req.params.id, user: req.userId });
     if (!location) return res.status(404).json({ success: false, message: 'Location not found' });
+
+    const remaining = await Location.findOne({ user: req.userId }).sort({ createdAt: 1 });
+    if (remaining) {
+      await Location.findByIdAndUpdate(remaining._id, { isDefault: true });
+      await User.findByIdAndUpdate(req.userId, {
+        defaultLocation: { name: remaining.name, country: remaining.country, lat: remaining.lat, lng: remaining.lng }
+      });
+    } else {
+      await User.findByIdAndUpdate(req.userId, {
+        defaultLocation: { name: 'Manila', country: 'Philippines', lat: 14.5995, lng: 120.9842 }
+      });
+    }
+
     res.json({ success: true, message: 'Location removed' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -498,6 +559,9 @@ app.delete('/api/locations/:id', auth, async (req, res) => {
 // Set Default Location
 app.put('/api/locations/:id/default', auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid location ID' });
+    }
     await Location.updateMany({ user: req.userId }, { isDefault: false });
     const location = await Location.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
@@ -505,6 +569,11 @@ app.put('/api/locations/:id/default', auth, async (req, res) => {
       { new: true }
     );
     if (!location) return res.status(404).json({ success: false, message: 'Location not found' });
+
+    await User.findByIdAndUpdate(req.userId, {
+      defaultLocation: { name: location.name, country: location.country, lat: location.lat, lng: location.lng }
+    });
+
     res.json({ success: true, location });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

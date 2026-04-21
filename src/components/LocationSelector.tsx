@@ -22,7 +22,7 @@ export default function LocationSelector({ locations, current, onSelect }: Props
     <div ref={ref} className="relative inline-block">
       <button
         onClick={() => setOpen(!open)}
-        className="glass-badge cursor-pointer hover:bg-white/8"
+        className="glass-badge cursor-pointer hover:bg-white/10"
       >
         <MapPin className="mr-1.5 h-3.5 w-3.5 shrink-0" style={{ color: 'var(--primary)' }} />
         <span className="truncate max-w-[120px] inline-block">{current.name}</span>

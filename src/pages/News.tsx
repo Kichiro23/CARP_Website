@@ -4,7 +4,7 @@ import { fetchNews } from '@/services/newsApi';
 import type { NewsArticle } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
 
-const NEWS_FALLBACK = './news-fallback.jpg';
+const NEWS_FALLBACK = '/news-fallback.jpg';
 
 interface Props { current: SavedLocation; }
 

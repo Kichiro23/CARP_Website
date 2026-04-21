@@ -5,10 +5,15 @@ import VideoBackground from './VideoBackground';
 import type { User } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
 
-export default function Layout({ user, logout, current }: { user: User | null; logout: () => void; current: SavedLocation }) {
+export default function Layout({ user, logout, current, loading }: { user: User | null; logout: () => void; current: SavedLocation; loading: boolean }) {
+  if (loading) return (
+    <div className="flex h-[100dvh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    </div>
+  );
   if (!user) return <Navigate to="/login" replace />;
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden">
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden">
       <VideoBackground opacity={0.3} />
       <Navbar auth={{ user, logout }} />
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">

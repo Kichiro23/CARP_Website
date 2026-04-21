@@ -37,7 +37,7 @@ export default function App() {
       <Route path="/register" element={<Register register={auth.register} googleLogin={auth.googleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={<Layout user={auth.user} logout={auth.logout} current={location.current} />}>
+      <Route element={<Layout user={auth.user} logout={auth.logout} current={location.current} loading={auth.loading} />}>
         <Route path="/dashboard" element={<Dashboard
           current={location.current}
           locations={location.locations}
@@ -62,19 +62,14 @@ export default function App() {
           setDefaultLocation={location.setDefaultLocation}
         />} />
         <Route path="/settings" element={<Settings theme={theme.theme} toggleTheme={theme.toggleTheme} />} />
-        <Route path="/security" element={<Security />} />
+        <Route path="/security" element={<Security changePassword={auth.changePassword} user={auth.user} />} />
       </Route>
     </Routes>
   );
 
-  // Only wrap with GoogleOAuthProvider if we have a client ID
-  if (GOOGLE_CLIENT_ID) {
-    return (
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        {app}
-      </GoogleOAuthProvider>
-    );
-  }
-
-  return app;
+  return (
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'dummy'}>
+      {app}
+    </GoogleOAuthProvider>
+  );
 }

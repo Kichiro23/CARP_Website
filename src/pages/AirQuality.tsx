@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { RefreshCw, MapPin, AlertTriangle, Activity, Wind } from 'lucide-react';
 import { fetchAirQuality, fetchWeather, aqiColor, pm25Class } from '@/services/weatherApi';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import type { SavedLocation } from '@/hooks/useLocation';
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
 interface Props { current: SavedLocation; }
 
@@ -123,12 +121,10 @@ export default function AirQuality({ current }: Props) {
 
       <div className="tile">
         <h3 className="tile-title">Health Recommendations</h3>
-        <div className="grid-tiles-2 gap-3">
-          {data.aqi <= 1 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Great day for outdoor activities! Air quality is ideal for everyone. Open windows for fresh air.</p>}
-          {data.aqi === 2 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sensitive individuals should reduce prolonged outdoor exertion. General public can continue normal activities.</p>}
-          {data.aqi === 3 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Everyone should limit prolonged outdoor activities. Consider wearing a mask outdoors. Keep windows closed.</p>}
-          {data.aqi >= 4 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Avoid outdoor activities. Keep windows closed and use air purifiers indoors. Wear N95 masks if going outside is necessary.</p>}
-        </div>
+        {data.aqi <= 1 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Great day for outdoor activities! Air quality is ideal for everyone. Open windows for fresh air.</p>}
+        {data.aqi === 2 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sensitive individuals should reduce prolonged outdoor exertion. General public can continue normal activities.</p>}
+        {data.aqi === 3 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Everyone should limit prolonged outdoor activities. Consider wearing a mask outdoors. Keep windows closed.</p>}
+        {data.aqi >= 4 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Avoid outdoor activities. Keep windows closed and use air purifiers indoors. Wear N95 masks if going outside is necessary.</p>}
         <p className="mt-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>Data from Open-Meteo Air Quality API. Updated in real-time for {current.name}.</p>
       </div>
     </div>

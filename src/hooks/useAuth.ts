@@ -23,22 +23,25 @@ function saveLocalUser(u: User | null) {
 }
 
 export function useAuth() {
-  const [state, setState] = useState<AuthState>(() => ({
-    user: getLocalUser(),
-    isAuthenticated: !!getLocalUser(),
+  const initialUser = getLocalUser();
+  const [state, setState] = useState<AuthState>({
+    user: initialUser,
+    isAuthenticated: !!initialUser,
     loading: true,
-  }));
+  });
 
   // Check auth status on mount
   useEffect(() => {
+    let mounted = true;
     const checkAuth = async () => {
       const token = localStorage.getItem('carp_token');
       if (!token) {
-        setState(p => ({ ...p, loading: false }));
+        if (mounted) setState(p => ({ ...p, loading: false }));
         return;
       }
       try {
         const data = await api.getMe();
+        if (!mounted) return;
         if (data?.user) {
           const user: User = {
             id: data.user.id,
@@ -46,6 +49,7 @@ export function useAuth() {
             email: data.user.email,
             avatar: data.user.avatar || '',
             authProvider: data.user.authProvider,
+            defaultLocation: data.user.defaultLocation,
           };
           saveLocalUser(user);
           setState({ user, isAuthenticated: true, loading: false });
@@ -54,21 +58,25 @@ export function useAuth() {
           setState({ user: null, isAuthenticated: false, loading: false });
         }
       } catch {
+        if (!mounted) return;
         api.logout();
         setState({ user: null, isAuthenticated: false, loading: false });
       }
     };
     checkAuth();
+    return () => { mounted = false; };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const data = await api.login(email, password);
+    const data = await api.login(email.trim(), password);
+    if (!data?.user) throw new Error('Invalid server response');
     const user: User = {
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
       avatar: data.user.avatar || '',
       authProvider: data.user.authProvider,
+      defaultLocation: data.user.defaultLocation,
     };
     saveLocalUser(user);
     setState({ user, isAuthenticated: true, loading: false });
@@ -76,13 +84,15 @@ export function useAuth() {
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const data = await api.register(name, email, password);
+    const data = await api.register(name.trim(), email.trim(), password);
+    if (!data?.user) throw new Error('Invalid server response');
     const user: User = {
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
       avatar: data.user.avatar || '',
       authProvider: data.user.authProvider,
+      defaultLocation: data.user.defaultLocation,
     };
     saveLocalUser(user);
     setState({ user, isAuthenticated: true, loading: false });
@@ -91,12 +101,14 @@ export function useAuth() {
 
   const googleLogin = useCallback(async (credential: string) => {
     const data = await api.googleAuth(credential);
+    if (!data?.user) throw new Error('Invalid server response');
     const user: User = {
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
       avatar: data.user.avatar || '',
       authProvider: 'google',
+      defaultLocation: data.user.defaultLocation,
     };
     saveLocalUser(user);
     setState({ user, isAuthenticated: true, loading: false });

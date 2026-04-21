@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { forgotPassword } from '@/services/api';
 import CarpLogo from '@/components/CarpLogo';
 import Footer from '@/components/Footer';
 import VideoBackground from '@/components/VideoBackground';
@@ -9,12 +10,20 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!email) { setError('Please enter your email'); return; }
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      await forgotPassword(email.trim());
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    }
+    setLoading(false);
   };
 
   return (
@@ -48,7 +57,7 @@ export default function ForgotPassword() {
                     </div>
                   </div>
                   {error && <div className="rounded-lg bg-red-500/10 px-4 py-2.5 text-center text-xs text-red-400 break-words">{error}</div>}
-                  <button type="submit" className="glass-btn w-full py-3">Send Reset Link</button>
+                  <button type="submit" disabled={loading} className="glass-btn w-full py-3">{loading ? 'Sending...' : 'Send Reset Link'}</button>
                 </form>
               </>
             ) : (
@@ -57,7 +66,7 @@ export default function ForgotPassword() {
                 <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Check Your Email</h2>
                 <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   We have sent password reset instructions to <strong style={{ color: 'var(--text)' }}>{email}</strong>.<br />
-                  This is a demo - no actual email was sent.
+                  If you don't see it, check your spam folder.
                 </p>
                 <Link to="/login" className="glass-btn mt-5 px-6 py-2.5 text-xs">Back to Sign In</Link>
               </div>

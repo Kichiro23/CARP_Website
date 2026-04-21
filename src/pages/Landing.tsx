@@ -19,7 +19,7 @@ export default function Landing() {
     <div className="relative flex min-h-screen flex-col overflow-hidden" style={{ background: '#0a0e1a' }}>
       <div className="absolute inset-0 z-0">
         <video autoPlay loop muted playsInline className="h-full w-full object-cover" style={{ opacity: 0.7 }}>
-          <source src="./videos/clouds.mp4" type="video/mp4" />
+          <source src="/videos/clouds.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(10,10,18,0.65) 0%, rgba(10,10,18,0.5) 40%, rgba(10,10,18,0.75) 100%)' }} />
       </div>

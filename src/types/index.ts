@@ -1,9 +1,15 @@
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   avatar?: string;
   authProvider?: string;
+  defaultLocation?: {
+    name: string;
+    country: string;
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface AuthState {

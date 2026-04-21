@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { BarChart3, RefreshCw, MapPin } from 'lucide-react';
 import { fetchWeather, fetchPM25, wmoEmoji } from '@/services/weatherApi';
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement } from 'chart.js';
 import type { WeatherData } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement);
 
 interface Props { current: SavedLocation; }
 

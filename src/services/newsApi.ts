@@ -2,7 +2,7 @@ import type { NewsArticle } from '@/types';
 
 const CACHE_KEY = 'carp_news_cache';
 const CACHE_TTL = 30 * 60 * 1000;
-const FALLBACK_IMAGE = './news-fallback.jpg';
+const FALLBACK_IMAGE = '/news-fallback.jpg';
 
 function getCache(): NewsArticle[] | null {
   try {

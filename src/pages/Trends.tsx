@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, RefreshCw, MapPin } from 'lucide-react';
 import { fetchWeather } from '@/services/weatherApi';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import type { WeatherData } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
 interface Props { current: SavedLocation; }
 

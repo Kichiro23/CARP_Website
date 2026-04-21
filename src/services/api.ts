@@ -1,5 +1,5 @@
 // CARP Backend API Service
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/$/, '');
 
 // Helper to get auth token
 function getToken(): string | null {
@@ -16,15 +16,23 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (token) {
+  if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(url, { ...options, headers });
-  const data = await res.json().catch(() => null);
+
+  let data: any = null;
+  const text = await res.text();
+  try { data = JSON.parse(text); } catch { /* not JSON */ }
 
   if (!res.ok) {
-    throw new Error(data?.message || `Request failed (${res.status})`);
+    if (res.status === 401) {
+      localStorage.removeItem('carp_token');
+      localStorage.removeItem('carp_session');
+      window.location.href = '/login';
+    }
+    throw new Error(data?.message || text.slice(0, 200) || `Request failed (${res.status})`);
   }
 
   return data;
@@ -71,7 +79,6 @@ export async function resetPassword(token: string, password: string) {
     method: 'POST',
     body: JSON.stringify({ token, password }),
   });
-  if (data.token) localStorage.setItem('carp_token', data.token);
   return data;
 }
 

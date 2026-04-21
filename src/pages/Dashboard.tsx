@@ -4,16 +4,14 @@ import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Cl
 import { fetchWeather, fetchPM25, fetchAirQuality, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
 import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import LocationSelector from '@/components/LocationSelector';
 import CitySearch from '@/components/CitySearch';
 import type { WeatherData } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
 import type { NewsArticle } from '@/types';
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const NEWS_FALLBACK = './news-fallback.jpg';
+const NEWS_FALLBACK = '/news-fallback.jpg';
 
 interface Props {
   current: SavedLocation;
