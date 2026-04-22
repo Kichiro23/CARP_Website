@@ -45,6 +45,7 @@ router.post('/register', authLimiter, [
       email,
       password,
       authProvider: 'local',
+      isVerified: true,
     });
 
     // Generate token
@@ -198,7 +199,7 @@ router.post('/forgot-password', authLimiter, [
     await user.save({ validateBeforeSave: false });
 
     // Create reset URL
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/#/reset-password?token=${resetToken}`;
 
     // Send email
     try {

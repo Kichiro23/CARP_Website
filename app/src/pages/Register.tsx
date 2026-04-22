@@ -60,15 +60,18 @@ export default function Register({ register, googleLogin }: Props) {
             <div className="mb-5 text-center"><h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>Create Account</h2>
             <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Join the climate research community</p></div>
 
-            <div className="mb-4">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign up failed')}
-                size="large"
-                text="signup_with"
-                shape="rectangular"
-                theme="filled_black"
-              />
+            <div className="mb-4 flex justify-center">
+              <div className="w-full max-w-[300px] overflow-hidden">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google sign up failed')}
+                  size="large"
+                  text="signup_with"
+                  shape="rectangular"
+                  theme="filled_black"
+                  width="300"
+                />
+              </div>
             </div>
 
             <div className="mb-4 flex items-center gap-3"><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /><span className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-muted)' }}>or</span><div className="h-px flex-1" style={{ background: 'var(--tile-border)' }} /></div>

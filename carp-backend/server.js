@@ -80,6 +80,7 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
   authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
   googleId: { type: String },
+  isVerified: { type: Boolean, default: true },
   resetPasswordToken: { type: String, select: false },
   resetPasswordExpires: { type: Date, select: false },
   defaultLocation: {
@@ -167,7 +168,7 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    const user = await User.create({ name, email, password, authProvider: 'local' });
+    const user = await User.create({ name, email, password, authProvider: 'local', isVerified: true });
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -294,7 +295,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       user.resetPasswordExpires = Date.now() + 30 * 60 * 1000;
       await user.save({ validateBeforeSave: false });
 
-      const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+      const resetUrl = `${FRONTEND_URL}/#/reset-password?token=${resetToken}`;
 
       try {
         await transporter.sendMail({

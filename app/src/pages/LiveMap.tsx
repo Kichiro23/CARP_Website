@@ -128,10 +128,32 @@ export default function LiveMap({ current }: Props) {
     setMarkers(prev => prev.filter(m => !(m.isCustom && m.name === name)));
   };
 
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState('');
+
   const locateMe = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => setCenter([pos.coords.latitude, pos.coords.longitude]), () => {});
+    if (!navigator.geolocation) {
+      setLocateError('Geolocation is not supported by your browser.');
+      return;
     }
+    setLocating(true);
+    setLocateError('');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setCenter([pos.coords.latitude, pos.coords.longitude]);
+        setLocating(false);
+      },
+      err => {
+        setLocating(false);
+        let msg = 'Unable to retrieve your location.';
+        if (err.code === 1) msg = 'Location access denied. Please enable location permissions in your browser settings.';
+        else if (err.code === 2) msg = 'Location unavailable. Please try again later.';
+        else if (err.code === 3) msg = 'Location request timed out. Please try again.';
+        setLocateError(msg);
+        setTimeout(() => setLocateError(''), 5000);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   return (
@@ -143,10 +165,27 @@ export default function LiveMap({ current }: Props) {
             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}><MapPin className="mr-1 inline h-3 w-3" style={{ color: 'var(--primary)' }} />{current.name} &middot; Global air quality stations</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={locateMe} className="glass-badge cursor-pointer"><Navigation className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Locate</button>
-            <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> {loading ? 'Loading...' : 'Refresh'}</button>
+            <button
+              onClick={locateMe}
+              disabled={locating}
+              className="glass-badge cursor-pointer select-none hover:bg-white/10 active:scale-95 transition-all disabled:opacity-60"
+              style={{ position: 'relative', zIndex: 20 }}
+              title="Center map on your current location"
+            >
+              <Navigation className={`mr-1 h-3 w-3 ${locating ? 'animate-spin' : ''}`} style={{ color: 'var(--primary)' }} />
+              {locating ? 'Locating...' : 'Locate'}
+            </button>
+            <button onClick={load} className="glass-badge cursor-pointer select-none hover:bg-white/10 active:scale-95 transition-all">
+              <RefreshCw className={`mr-1 h-3 w-3 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--primary)' }} />
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
           </div>
         </div>
+        {locateError && (
+          <div className="mt-2 rounded-lg px-3 py-2 text-[11px] text-red-400" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+            {locateError}
+          </div>
+        )}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="sm:w-72">
             <CitySearch onSelect={handleSearchSelect} placeholder="Search any city or country..." />

@@ -14,9 +14,22 @@ export const DEFAULT_LOCATION = {
 };
 
 export const TEAM = [
-  { name: 'Rommel Andrei L. De Leon', role: 'Lead Developer', initials: 'RD' },
-  { name: 'Raiza Charine H. Galang', role: 'UI/UX Designer', initials: 'RG' },
-  { name: 'Cristina Angela G. Sedigo', role: 'Frontend Developer', initials: 'AS' },
-  { name: 'John Mareign B. Punzalan', role: 'Backend Developer', initials: 'JP' },
-  { name: 'Rowella L. Lazaro', role: 'QA & Documentation', initials: 'RL' },
+  { name: 'Rommel Andrei L. De Leon', role: 'Developer', initials: 'RD' },
+  { name: 'Raiza Charine H. Galang', role: 'Developer', initials: 'RG' },
+  { name: 'Cristina Angela G. Sedigo', role: 'Developer', initials: 'AS' },
+  { name: 'John Mareign B. Punzalan', role: 'Developer', initials: 'JP' },
+  { name: 'Rowella L. Lazaro', role: 'Developer', initials: 'RL' },
+];
+
+export const POPULAR_CITIES = [
+  { name: 'Manila', country: 'Philippines', lat: 14.5995, lng: 120.9842 },
+  { name: 'Quezon City', country: 'Philippines', lat: 14.6760, lng: 121.0437 },
+  { name: 'Cebu City', country: 'Philippines', lat: 10.3157, lng: 123.8854 },
+  { name: 'Davao City', country: 'Philippines', lat: 7.1907, lng: 125.4553 },
+  { name: 'Baguio', country: 'Philippines', lat: 16.4023, lng: 120.5960 },
+  { name: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503 },
+  { name: 'New York', country: 'USA', lat: 40.7128, lng: -74.0060 },
+  { name: 'London', country: 'UK', lat: 51.5074, lng: -0.1278 },
+  { name: 'Singapore', country: 'Singapore', lat: 1.3521, lng: 103.8198 },
+  { name: 'Sydney', country: 'Australia', lat: -33.8688, lng: 151.2093 },
 ];
