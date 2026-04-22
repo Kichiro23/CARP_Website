@@ -32,7 +32,19 @@ const MAJOR_CITIES = [
   'Baguio, Philippines', 'Iloilo City, Philippines', 'Bacolod, Philippines', 'Cagayan de Oro, Philippines',
   'Zamboanga City, Philippines', 'Tacloban, Philippines', 'General Santos, Philippines', 'Dagupan, Philippines',
   'Naga, Philippines', 'Legazpi, Philippines', 'Puerto Princesa, Philippines', 'Tagaytay, Philippines',
-  'Angeles, Philippines', 'Olongapo, Philippines', 'Batangas City, Philippines', 'Lucena, Philippines',
+  'Batangas City, Philippines', 'Lucena, Philippines',
+  // Bulacan
+  'Malolos, Philippines', 'Meycauayan, Philippines', 'San Jose del Monte, Philippines', 'Santa Maria, Philippines',
+  'Marilao, Philippines', 'Bocaue, Philippines', 'Baliuag, Philippines', 'Plaridel, Philippines',
+  'Pulilan, Philippines', 'Hagonoy, Philippines', 'Calumpit, Philippines', 'Guiguinto, Philippines',
+  'Bulakan, Philippines', 'Paombong, Philippines', 'Pandi, Philippines', 'Angat, Philippines',
+  'Norzagaray, Philippines', 'San Miguel, Philippines', 'San Ildefonso, Philippines',
+  // Pampanga
+  'Angeles, Philippines', 'Mabalacat, Philippines', 'Magalang, Philippines', 'Arayat, Philippines',
+  'Mexico, Philippines', 'Apalit, Philippines', 'Macabebe, Philippines', 'Masantol, Philippines',
+  'Guagua, Philippines', 'Lubao, Philippines', 'Floridablanca, Philippines', 'Porac, Philippines',
+  'Sasmuan, Philippines', 'Candaba, Philippines', 'San Luis, Philippines', 'Bacolor, Philippines',
+  'Minalin, Philippines', 'Santo Tomas, Philippines',
   // Asia
   'Tokyo, Japan', 'Seoul, South Korea', 'Beijing, China', 'Hong Kong',
   'Bangkok, Thailand', 'Jakarta, Indonesia', 'Singapore', 'Kuala Lumpur, Malaysia',
