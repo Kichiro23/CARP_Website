@@ -2,249 +2,187 @@
 
 ![CARP Logo](app/public/logo.png)
 
-**CARP** is a comprehensive climate and air quality monitoring platform built with React, TypeScript, and a real Node.js backend. It provides real-time weather data, air quality index tracking, interactive global mapping, and climate news for 75+ cities worldwide including full Philippine coverage.
+**CARP** is a comprehensive climate and air quality monitoring web application that provides real-time weather data, air quality index tracking, interactive global mapping, and climate news for cities worldwide.
+
+Developed by **BSCPE 3C Students** as a capstone project.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [User Manual](#user-manual)
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+- [Developers](#developers)
 
 ---
 
 ## Features
 
-### Weather & Climate
-- **Real-time weather data** from Open-Meteo API (temperature, humidity, wind, UV, precipitation)
-- **Air Quality Index (AQI)** monitoring with PM2.5 data
-- **7-day forecasts** with daily and hourly breakdowns
-- **Interactive weather charts** using Chart.js
-- **City comparison tool** side-by-side weather metrics
+### Weather & Climate Monitoring
+- **Real-time weather data** - temperature, humidity, wind speed, UV index, precipitation
+- **Air Quality Index (AQI)** - PM2.5 monitoring with health recommendations
+- **7-day weather forecasts** - daily and hourly breakdowns
+- **Interactive weather charts** - visual analytics using Chart.js
+- **City comparison tool** - side-by-side weather metrics for multiple cities
 
 ### Global Coverage
 - **75+ cities** across 6 continents
-- **15 Philippine cities** including Manila, Quezon City, Cebu, Davao, Baguio
-- **Interactive Leaflet map** with temperature-coded markers and AQI popups
-- **Search with autocomplete** and fly-to-location
+- **Philippine cities** including Manila, Quezon City, Cebu, Davao, Baguio
+- **Interactive world map** - temperature-coded markers with AQI popups
+- **Search with autocomplete** - quick city lookup and fly-to-location
 
-### Data & News
-- **Real climate news** from The Guardian and BBC via RSS2JSON
-- **REST Countries API** integration with flags and demographics
-- **AI-powered weather insights** for each location
+### Data & Insights
+- **Real-time climate news** - latest environmental news feeds
+- **Country information** - flags, demographics, and geographic data
+- **Weather analytics** - trend analysis and pattern recognition
+- **AI-powered insights** - location-based weather interpretations
 
-### Authentication (Real Backend)
-- **Email/password registration** with bcrypt-hashed passwords
-- **JWT token authentication** with 24h expiry + refresh tokens
-- **Google OAuth 2.0** sign-in support
-- **Protected routes** with auth guards
-- **User profiles** with password change and account deletion
+### User Account System
+- **Email/password registration** - secure account creation
+- **Google Sign-In** - one-click authentication
+- **User profiles** - customizable settings and preferences
+- **Password management** - secure change password functionality
+- **Session management** - automatic logout and token refresh
 
-### Design
-- **Cloud video background** on all pages (generated, not static)
-- **iOS 26 glassmorphism** design system
-- **Dark/light mode** toggle
-- **Fully responsive** mobile-first layout
-- **No text overlap** - proper padding and truncation throughout
+### Design & UX
+- **Cloud video background** - dynamic animated backdrop
+- **Glassmorphism design** - modern frosted-glass UI elements
+- **Dark & light mode** - theme toggle for user preference
+- **Fully responsive** - mobile, tablet, and desktop optimized
+- **Smooth animations** - page transitions and micro-interactions
+
+---
+
+## User Manual
+
+### Getting Started
+
+#### 1. Landing Page
+- Visit the website to see the animated landing page
+- Click **"Get Started"** or **"Sign In"** to access the platform
+
+#### 2. Create an Account
+- Click **"Create Account"** on the login page
+- Fill in your **full name**, **email address**, and **password**
+- Alternatively, click **"Sign in with Google"** for instant registration
+
+#### 3. Log In
+- Enter your **email** and **password**
+- Click **"Sign In"**
+- Or use **Google Sign-In** for faster access
+
+### Dashboard Navigation
+
+After logging in, you will see the **Dashboard** with:
+
+| Section | Description |
+|---------|-------------|
+| **Current Weather** | Live weather for your selected location |
+| **7-Day Forecast** | Scrollable daily weather predictions |
+| **Hourly Forecast** | Hour-by-hour breakdown for today |
+| **Air Quality** | AQI reading with health recommendations |
+| **Weather Charts** | Interactive temperature and humidity graphs |
+
+### Main Features
+
+#### Live Map
+- Click **"Live Map"** in the navigation bar
+- Explore cities worldwide with interactive markers
+- Click any marker to see live weather data
+- Use the search bar to find specific cities
+
+#### Compare Cities
+- Go to **"Compare"** page
+- Select two or more cities
+- View side-by-side weather metrics
+
+#### Analytics
+- Visit **"Analytics"** for detailed charts
+- View temperature trends over time
+- Analyze humidity and precipitation patterns
+
+#### News
+- Check **"News"** for latest climate articles
+- Read environmental updates from trusted sources
+
+#### Countries
+- Browse **"Countries"** for global data
+- View flags, capitals, and geographic information
+
+### Account Management
+
+#### Profile Settings
+- Click your **avatar** in the top right
+- Select **"Profile"** to view your information
+- Update your name or email as needed
+
+#### Change Password
+- Go to **"Security"** from the profile menu
+- Enter your current password
+- Set a new password (minimum 6 characters)
+
+#### Log Out
+- Click your **avatar** → **"Log Out"**
+- You will be redirected to the login page
+
+---
+
+## Screenshots
+
+| Page | Description |
+|------|-------------|
+| Landing Page | Animated intro with cloud video background |
+| Dashboard | Main weather overview with charts |
+| Live Map | Interactive world map with city markers |
+| Compare | Side-by-side city weather comparison |
+| Analytics | Detailed weather trend charts |
+| News | Climate and environmental news feed |
+| Profile | User account management |
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-| Technology | Purpose |
-|---|---|
-| React 19 + TypeScript | UI framework |
-| Vite | Build tool |
-| Tailwind CSS | Styling |
-| React Router | Client-side routing (HashRouter) |
-| Chart.js + react-chartjs-2 | Weather charts |
-| React-Leaflet | Interactive maps |
-| Lucide React | Icons |
+- React 19 + TypeScript
+- Vite (Build Tool)
+- Tailwind CSS (Styling)
+- React Router (Navigation)
+- Chart.js (Data Visualization)
+- React-Leaflet (Maps)
+- Lucide React (Icons)
 
 ### Backend
-| Technology | Purpose |
-|---|---|
-| Node.js + Express | API server |
-| TypeScript | Type safety |
-| JSON file database | Persistent storage (no SQLite compilation needed) |
-| bcryptjs | Password hashing (12 rounds) |
-| jsonwebtoken | JWT authentication |
-| Google Identity Services | Real Google OAuth |
+- Node.js + Express
+- MongoDB (Database)
+- JWT Authentication
+- Google OAuth 2.0
+- bcrypt (Password Hashing)
 
 ### External APIs
-| API | Data |
-|---|---|
-| Open-Meteo | Weather forecasts |
-| Open-Meteo Air Quality | PM2.5 AQI data |
-| RSS2JSON | Climate news feeds |
-| REST Countries | Country data & flags |
+- Open-Meteo (Weather Data)
+- Open-Meteo Air Quality (AQI Data)
+- REST Countries (Country Information)
 
 ---
 
-## Quick Start
+## Developers
 
-### Prerequisites
-- Node.js 18+
-- npm
-
-### 1. Clone & Install Frontend
-```bash
-cd app
-npm install
-```
-
-### 2. Install & Start Backend
-```bash
-cd ../carp-backend
-npm install
-npm run build
-node dist/index.js
-```
-Backend runs on `http://localhost:3001`
-
-### 3. Configure Google OAuth (Optional)
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create OAuth 2.0 credentials (Web application)
-3. Add `http://localhost:5173` to Authorized JavaScript origins
-4. Copy Client ID to `app/.env`:
-```env
-VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-```
-5. Copy Client ID & Secret to `carp-backend/.env`:
-```env
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-```
-
-### 4. Start Frontend
-```bash
-cd app
-npm run dev
-```
-Opens on `http://localhost:5173`
-
----
-
-## Project Structure
-
-```
-app/                        # Frontend (React + Vite)
-  src/
-    components/             # Reusable components
-      CarpLogo.tsx
-      Footer.tsx
-      GoogleSignIn.tsx
-      Layout.tsx
-      Navbar.tsx
-      VideoBackground.tsx
-    hooks/
-      useAuth.ts            # Authentication hook
-      useTheme.ts           # Dark/light mode
-    pages/                  # 15 pages
-      Login.tsx
-      Register.tsx
-      Dashboard.tsx
-      LiveMap.tsx
-      Countries.tsx
-      Compare.tsx
-      Analytics.tsx
-      Trends.tsx
-      Alerts.tsx
-      News.tsx
-      About.tsx
-      Profile.tsx
-      Settings.tsx
-      Security.tsx
-    services/
-      api.ts                # Backend API client
-      weatherApi.ts         # Open-Meteo integration
-      newsApi.ts            # RSS2JSON feeds
-      countriesApi.ts       # REST Countries
-      phCitiesApi.ts        # Philippine cities data
-      countriesList.ts      # Country dropdown list
-    types/                  # TypeScript interfaces
-  public/
-    logo.png                # CARP logo
-    videos/
-      clouds.mp4            # Background video
-  .env                     # Frontend env vars
-  vite.config.ts
-  tailwind.config.js
-
-carp-backend/               # Backend (Express + Node.js)
-  src/
-    db/
-      jsonDb.ts             # JSON database engine
-      users.ts              # User CRUD operations
-      tokens.ts             # Refresh token management
-    middleware/
-      jwt.ts                # JWT auth middleware
-    routes/
-      auth.ts               # Login, register, Google OAuth
-      user.ts               # Profile, password, delete
-    index.ts                # Express server entry
-  .env                     # Backend env vars
-```
-
----
-
-## API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/auth/register` | Create account (name, email, password) |
-| POST | `/api/auth/login` | Login (email, password) |
-| POST | `/api/auth/google` | Google OAuth callback |
-| GET | `/api/auth/me` | Get current user (requires Bearer token) |
-| POST | `/api/auth/logout` | Revoke refresh token |
-| POST | `/api/auth/refresh` | Refresh access token |
-
-### User
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/user/profile` | Get user profile |
-| PATCH | `/api/user/profile` | Update profile |
-| POST | `/api/user/change-password` | Change password |
-| DELETE | `/api/user/account` | Delete account |
-
----
-
-## Environment Variables
-
-### Frontend (`app/.env`)
-```env
-VITE_API_URL=http://localhost:3001
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-```
-
-### Backend (`carp-backend/.env`)
-```env
-PORT=3001
-JWT_SECRET=your-super-secret-key
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-DB_PATH=./carp.json
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-```
-
----
-
-## Team
-
-Developed by **BSCpE 3C Students 2026**
+Developed by **BSCPE 3C Students**
 
 | Name | Role |
-|---|---|
+|------|------|
 | Rommel De Leon | Lead Developer |
-| Raiza Galang | UI/UX Designer |
 | Angela Sedigo | Frontend Developer |
 | John Punzalan | Backend Developer |
 | Rowella Lazaro | QA & Documentation |
 
 ---
 
-## License
+## Acknowledgments
 
-This project was created for academic purposes at [Your University Name].
+This project was created for academic purposes as part of the Bachelor of Science in Computer Engineering program.
 
----
-
-## Screenshots
-
-*Coming soon - Dashboard, Live Map, Analytics, Login, Register*
+**2025-2026**
