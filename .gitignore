@@ -1,6 +1,38 @@
+# Dependencies
 node_modules/
-# dist/
+app/node_modules/
+carp-backend/node_modules/
+
+# Build outputs
+dist/
+app/dist/
+carp-backend/dist/
+
+# Environment variables
 .env
+.env.local
 .env.production
-app/
-deploy/
+app/.env
+app/.env.production
+carp-backend/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+dist.zip
+app/dist.zip
+*.tmp
+
+# Python
+__pycache__/
+*.pyc
