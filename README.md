@@ -6,9 +6,8 @@
 
 Developed by **BSCPE 3C Students** as a capstone project.
 
-**Live Sites:**
+**Live Site:**
 - 🌐 **Production:** https://weathercarp.com
-- 🌐 **GitHub Pages:** https://Kichiro23.github.io/CARP_Website
 
 ---
 
@@ -17,8 +16,6 @@ Developed by **BSCPE 3C Students** as a capstone project.
 - [Features](#features)
 - [User Manual](#user-manual)
 - [Tech Stack](#tech-stack)
-- [API Configuration](#api-configuration)
-- [Deployment](#deployment)
 - [Developers](#developers)
 
 ---
@@ -199,63 +196,6 @@ After logging in, you will see the **Dashboard** with:
 - Open-Meteo Geocoding (City Search)
 - REST Countries (Country Information)
 - Google Gemini 2.0 Flash (AI Chatbot)
-
----
-
-## API Configuration
-
-### Google Gemini (CARP AI Chatbot)
-1. Get a free API key at [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Add it to `app/.env`:
-   ```
-   VITE_GEMINI_API_KEY=your-key-here
-   ```
-3. The chatbot falls back to rule-based responses automatically if the API quota is exceeded.
-
-### Google OAuth
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create OAuth 2.0 credentials
-3. Add authorized JavaScript origins:
-   - `https://weathercarp.com`
-   - `https://Kichiro23.github.io`
-   - `http://localhost:3000` (for local dev)
-4. Add the Client ID to `app/.env`:
-   ```
-   VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   ```
-
-### Backend Environment Variables
-Create `carp-backend/.env`:
-```env
-PORT=3001
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/carp
-JWT_SECRET=your-jwt-secret
-GOOGLE_CLIENT_ID=your-google-client-id
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-FRONTEND_URL=https://weathercarp.com
-```
-
----
-
-## Deployment
-
-### Frontend (Hostinger)
-1. Build: `cd app && npm run build`
-2. Upload `app/dist/` contents to `public_html/`
-3. Update `index.html` script src if the hashed JS filename changed
-
-### Frontend (GitHub Pages)
-1. Build & deploy: `cd app && npm run deploy`
-2. Uses `HashRouter` for SPA routing compatibility
-
-### Backend (Render)
-1. Connect your GitHub repo to [Render](https://render.com)
-2. Set root directory to `carp-backend/`
-3. Add environment variables from `.env`
-4. Deploy
-
----
 
 ## Developers
 
