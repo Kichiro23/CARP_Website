@@ -102,7 +102,7 @@ export interface AQIForecast {
 }
 
 export interface HistoricalWeather {
-  date: string;
+  date?: string;
   maxTemp: number;
   minTemp: number;
   weatherCode: number;

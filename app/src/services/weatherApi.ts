@@ -194,11 +194,13 @@ export async function fetchSunriseSunset(lat: number, lon: number): Promise<{ su
   };
 }
 
-export async function fetchHistoricalWeather(lat: number, lon: number): Promise<{ maxTemp: number; minTemp: number; weatherCode: number } | null> {
-  const lastYear = new Date();
-  lastYear.setFullYear(lastYear.getFullYear() - 1);
-  const dateStr = lastYear.toISOString().split('T')[0];
-  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateStr}&end_date=${dateStr}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
+export async function fetchHistoricalWeather(lat: number, lon: number, dateStr?: string): Promise<{ maxTemp: number; minTemp: number; weatherCode: number } | null> {
+  const targetDate = dateStr || (() => {
+    const lastYear = new Date();
+    lastYear.setFullYear(lastYear.getFullYear() - 1);
+    return lastYear.toISOString().split('T')[0];
+  })();
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${targetDate}&end_date=${targetDate}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
   const res = await safeFetch(url);
   if (!res) return null;
   const data = await res.json();

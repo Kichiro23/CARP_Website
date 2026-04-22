@@ -23,6 +23,13 @@ import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Security from '@/pages/Security';
 import ChatAgent from '@/components/ChatAgent';
+import CityBattle from '@/pages/CityBattle';
+import TimeMachine from '@/pages/TimeMachine';
+import TyphoonTracker from '@/pages/TyphoonTracker';
+import HeatmapCalendar from '@/pages/HeatmapCalendar';
+import HolidayForecast from '@/pages/HolidayForecast';
+import WeatherJournal from '@/pages/WeatherJournal';
+import ZenMode from '@/pages/ZenMode';
 import Widget from '@/pages/Widget';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -66,6 +73,13 @@ export default function App() {
         />} />
         <Route path="/settings" element={<Settings theme={theme.theme} toggleTheme={theme.toggleTheme} />} />
         <Route path="/security" element={<Security changePassword={auth.changePassword} user={auth.user} />} />
+        <Route path="/battle" element={<CityBattle />} />
+        <Route path="/timemachine" element={<TimeMachine />} />
+        <Route path="/typhoons" element={<TyphoonTracker />} />
+        <Route path="/heatmap" element={<HeatmapCalendar />} />
+        <Route path="/holidays" element={<HolidayForecast />} />
+        <Route path="/journal" element={<WeatherJournal />} />
+        <Route path="/zen" element={<ZenMode />} />
       </Route>
     </Routes>
   );
