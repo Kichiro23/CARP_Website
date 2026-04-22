@@ -1,22 +1,14 @@
 import { BarChart3, Shield, Globe, Newspaper, Droplets, Sprout, Sun, Flame, History, CalendarDays, CloudRain, BookOpen, Sparkles, Map, Brain, Leaf, Users } from 'lucide-react';
-
-
-const developers = [
-  { name: 'Rommel Andrei L. De Leon', role: 'Lead Developer & System Architect', initials: 'RD', bio: 'Full-stack developer specializing in React, Node.js, and environmental data visualization. Led the architecture and API integration for CARP.' },
-  { name: 'Raiza Charine H. Galang', role: 'Frontend Developer & UI/UX Designer', initials: 'RG', bio: 'React and TypeScript specialist focused on creating intuitive user interfaces. Designed the glassmorphism theme and responsive layouts.' },
-  { name: 'Cristina Angela G. Sedigo', role: 'Backend Developer & Database Engineer', initials: 'AS', bio: 'Node.js and MongoDB expert responsible for authentication, user management, and data persistence layers.' },
-  { name: 'John Mareign B. Punzalan', role: 'Data Integration Specialist', initials: 'JP', bio: 'API integration and data processing lead. Connected Open-Meteo, air quality, and geocoding services into a unified platform.' },
-  { name: 'Rowella L. Lazaro', role: 'Quality Assurance & Documentation', initials: 'RL', bio: 'Ensured platform reliability through testing, documentation, and user experience validation across all features.' },
-];
+import { TEAM } from '@/config/api';
 
 const features = [
-  { icon: BarChart3, title: 'Real-Time Weather & Climate', desc: 'Live temperature, humidity, wind, UV index, precipitation, visibility, and cloud cover from Open-Meteo API with hourly and daily forecasts.' },
-  { icon: Shield, title: 'Air Quality Monitoring', desc: 'Track PM2.5, PM10, CO, NO2, O3, SO2 with AQI classification, 24-hour PM2.5 forecasts, and health recommendations.' },
+  { icon: BarChart3, title: 'Real-Time Weather & Climate', desc: 'Live temperature, humidity, wind, UV index, precipitation, visibility, cloud cover, surface pressure, and hourly/daily forecasts.' },
+  { icon: Shield, title: 'Air Quality Monitoring', desc: 'Track PM2.5, PM10, CO, NO₂, O₃, SO₂ with AQI classification, 24-hour forecasts, and health recommendations.' },
   { icon: Droplets, title: 'Water & Marine Systems', desc: 'Sea surface temperature, wave height, and river discharge monitoring for aquatic environmental health.' },
-  { icon: Sprout, title: 'Soil & Agriculture', desc: 'Soil moisture and temperature at multiple depths, with agricultural insights for crop management and drought assessment.' },
+  { icon: Sprout, title: 'Soil & Agriculture', desc: 'Soil moisture and temperature with agricultural insights for crop management and drought assessment.' },
   { icon: Sun, title: 'UV & Solar Radiation', desc: '7-day UV index forecasts with solar radiation data and SPF protection recommendations.' },
   { icon: Flame, title: 'Wildfire Risk Assessment', desc: 'Fire risk calculator based on temperature, humidity, wind, and evapotranspiration with prevention guidelines.' },
-  { icon: Map, title: 'Interactive Live Map', desc: 'Global air quality stations with PM2.5 color-coded markers, precipitation radar, cloud cover overlays, and weather detail panels.' },
+  { icon: Map, title: 'Interactive Live Map', desc: 'Global map with AQI markers, precipitation radar, cloud cover overlays, and weather detail panels.' },
   { icon: Globe, title: 'Global City Explorer', desc: '60+ preloaded cities across 6 continents, country profiles, city battle rankings, and side-by-side weather comparison.' },
   { icon: History, title: 'Time Machine', desc: 'Historical weather lookup for any date from 1940 to present using Open-Meteo Archive API.' },
   { icon: CalendarDays, title: 'Holiday Forecast', desc: 'Real weather forecasts for upcoming Philippine holidays with category badges and aggregated statistics.' },
@@ -68,16 +60,15 @@ export default function About() {
         <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
           Developed by <strong>BSCpE 3C Students</strong> for the Academic Year 2025-2026 at <strong>Bulacan State University</strong>.
         </p>
-        <div className="space-y-2">
-          {developers.map(d => (
-            <div key={d.name} className="tile flex items-start gap-3">
+        <div className="grid-tiles-2">
+          {TEAM.map(m => (
+            <div key={m.name} className="tile flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #EA9D63, #d48952)' }}>
-                {d.initials}
+                {m.initials}
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{d.name}</p>
-                <p className="text-[11px] font-medium" style={{ color: 'var(--primary)' }}>{d.role}</p>
-                <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{d.bio}</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{m.name}</p>
+                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{m.role}</p>
               </div>
             </div>
           ))}

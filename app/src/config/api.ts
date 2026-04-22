@@ -16,7 +16,7 @@ export const DEFAULT_LOCATION = {
 export const TEAM = [
   { name: 'Rommel Andrei L. De Leon', role: 'Developer', initials: 'RD' },
   { name: 'Raiza Charine H. Galang', role: 'Developer', initials: 'RG' },
-  { name: 'Cristina Angela G. Sedigo', role: 'Developer', initials: 'AS' },
+  { name: 'Cristina Angela G. Sedigo', role: 'Developer', initials: 'CS' },
   { name: 'John Mareign B. Punzalan', role: 'Developer', initials: 'JP' },
   { name: 'Rowella L. Lazaro', role: 'Developer', initials: 'RL' },
 ];

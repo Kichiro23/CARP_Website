@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History, Flame, Sprout, Sun } from 'lucide-react';
+import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History, Flame, Sprout, Sun, Users } from 'lucide-react';
 import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, fetchFireRisk, fetchUVData, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
 import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
@@ -39,8 +39,25 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
   const [alerts, setAlerts] = useState<Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }>>([]);
   const [fireRisk, setFireRisk] = useState<{ risk: string; riskColor: string } | null>(null);
   const [uvData, setUVData] = useState<{ uvMax: number; radiation: number } | null>(null);
+  const [population, setPopulation] = useState(() => {
+    const elapsed = (Date.now() - 1704067200000) / 1000;
+    return Math.floor(8_100_000_000 + elapsed * 2.3);
+  });
+  const [clocks, setClocks] = useState<string[]>([
+    'Asia/Manila', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Tokyo'
+  ].map(tz => new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })));
 
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - 1704067200000) / 1000;
+      setPopulation(Math.floor(8_100_000_000 + elapsed * 2.3));
+      setClocks(['Asia/Manila', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Tokyo'].map(tz =>
+        new Date().toLocaleTimeString('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+      ));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const load = async () => {
     setLoading(true); setError('');
@@ -142,6 +159,25 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
           <button onClick={handleShare} className="glass-badge cursor-pointer" title="Share weather">
             <Share2 className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> {shared ? 'Copied!' : 'Share'}
           </button>
+        </div>
+      </div>
+
+      {/* Population + Clocks */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="tile flex items-center gap-3">
+          <Users className="h-5 w-5 shrink-0" style={{ color: 'var(--primary)' }} />
+          <div>
+            <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: 'var(--primary)' }}>World Population</p>
+            <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--text)' }}>{population.toLocaleString('en-US')}</p>
+          </div>
+        </div>
+        <div className="tile flex items-center gap-2 overflow-x-auto">
+          {['Manila', 'UTC', 'NYC', 'London', 'Tokyo'].map((label, i) => (
+            <div key={label} className="text-center min-w-[52px]">
+              <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{label}</p>
+              <p className="text-xs font-bold tabular-nums" style={{ color: 'var(--text)' }}>{clocks[i] || '--:--:--'}</p>
+            </div>
+          ))}
         </div>
       </div>
 

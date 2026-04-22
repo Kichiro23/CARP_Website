@@ -254,11 +254,11 @@ Developed by **BSCpE 3C Students**
 
 | Name | Role |
 |------|------|
-| Rommel Andrei L. De Leon | Lead Developer & System Architect |
-| Raiza Charine H. Galang | Frontend Developer & UI/UX Designer |
-| Cristina Angela G. Sedigo | Backend Developer & Database Engineer |
-| John Mareign B. Punzalan | Data Integration Specialist |
-| Rowella L. Lazaro | Quality Assurance & Documentation |
+| Rommel Andrei L. De Leon | Developer |
+| Raiza Charine H. Galang | Developer |
+| Cristina Angela G. Sedigo | Developer |
+| John Mareign B. Punzalan | Developer |
+| Rowella L. Lazaro | Developer |
 
 ---
 
