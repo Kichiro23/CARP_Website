@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle } from 'lucide-react';
-import { fetchWeather, fetchPM25, fetchAirQuality, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
+import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History } from 'lucide-react';
+import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
 import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
 import LocationSelector from '@/components/LocationSelector';
 import CitySearch from '@/components/CitySearch';
-import type { WeatherData } from '@/types';
+import type { WeatherData, AQIForecast } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
 import type { NewsArticle } from '@/types';
 
@@ -29,19 +29,45 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [time, setTime] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // New features state
+  const [sunriseSunset, setSunriseSunset] = useState<{ sunrise: string; sunset: string; dayLength: string } | null>(null);
+  const [historical, setHistorical] = useState<{ maxTemp: number; minTemp: number; weatherCode: number } | null>(null);
+  const [aqiForecast, setAqiForecast] = useState<AQIForecast[]>([]);
+  const [shared, setShared] = useState(false);
+  const [alerts, setAlerts] = useState<Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }>>([]);
 
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
 
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const [w, p, aq, n] = await Promise.all([
+      const [w, p, aq, n, ss, hist, aqiF] = await Promise.all([
         fetchWeather(current.lat, current.lng),
         fetchPM25(current.lat, current.lng),
         fetchAirQuality(current.lat, current.lng),
         fetchNews(),
+        fetchSunriseSunset(current.lat, current.lng),
+        fetchHistoricalWeather(current.lat, current.lng),
+        fetchAQIForecast(current.lat, current.lng),
       ]);
       setWeather(w); setPm25(p); setAirQuality(aq); setNews(n.slice(0, 4));
+      setSunriseSunset(ss); setHistorical(hist); setAqiForecast(aqiF);
+      setLastUpdated(new Date());
+
+      // Generate alerts based on current conditions
+      const newAlerts: Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }> = [];
+      if (w) {
+        const cur = w.current;
+        if (cur.temperature > 35) newAlerts.push({ id: 'heat', title: 'Heat Warning', desc: `Temperature reaching ${cur.temperature}°C. Stay hydrated and avoid prolonged sun exposure.`, severity: 'high' });
+        if (cur.uvIndex > 8) newAlerts.push({ id: 'uv', title: 'High UV Alert', desc: `UV index at ${cur.uvIndex}. Apply SPF 50+ sunscreen and seek shade.`, severity: 'medium' });
+        if (cur.windSpeed > 50) newAlerts.push({ id: 'wind', title: 'Strong Winds', desc: `Wind speeds up to ${cur.windSpeed} km/h. Secure loose outdoor items.`, severity: 'high' });
+        if (p !== null && p > 55) newAlerts.push({ id: 'aqi', title: 'Poor Air Quality', desc: `PM2.5 at ${p}. Wear a mask if going outdoors.`, severity: 'medium' });
+        if (cur.precipitation > 10) newAlerts.push({ id: 'rain', title: 'Heavy Rain', desc: `Heavy precipitation expected. Carry an umbrella and watch for flooding.`, severity: 'medium' });
+      }
+      setAlerts(newAlerts);
+
       if (!w) setError('Could not load weather data. Check your connection.');
     } catch { setError('Failed to load data.'); }
     setLoading(false);
@@ -54,9 +80,23 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
     if (!exists) addLocation(city);
   };
 
+  const handleShare = () => {
+    if (!weather) return;
+    const cur = weather.current;
+    const text = `It's ${cur.temperature}°C and ${wmoLabel(cur.weatherCode)} in ${current.name}. AQI: ${pm25 !== null ? pm25 : '--'}. Check CARP for more details: https://weathercarp.com`;
+    navigator.clipboard.writeText(text).then(() => {
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    });
+  };
+
   const cOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-    scales: { x: { ticks: { color: '#9a9da8', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
-              y: { ticks: { color: '#9a9da8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.03)' } } } };
+    scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 8, font: { size: 10 } }, grid: { color: 'var(--tile-border)' } },
+              y: { ticks: { color: 'var(--text-muted)', font: { size: 10 } }, grid: { color: 'var(--tile-border)' } } } };
+
+  const aqiChartOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+    scales: { x: { ticks: { color: 'var(--text-muted)', maxTicksLimit: 6, font: { size: 10 } }, grid: { color: 'var(--tile-border)' } },
+              y: { ticks: { color: 'var(--text-muted)', font: { size: 10 } }, grid: { color: 'var(--tile-border)' } } } };
 
   if (loading) return (
     <div className="space-y-4">
@@ -81,6 +121,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Dashboard</h1>
@@ -92,9 +133,43 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
         <div className="flex items-center gap-2">
           <div className="glass-badge"><Clock className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} />{time.toLocaleTimeString()}</div>
           <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Refresh</button>
+          <button onClick={handleShare} className="glass-badge cursor-pointer" title="Share weather">
+            <Share2 className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> {shared ? 'Copied!' : 'Share'}
+          </button>
         </div>
       </div>
 
+      {/* Last Updated */}
+      {lastUpdated && (
+        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+          <History className="h-3 w-3" />
+          Last updated: {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      )}
+
+      {/* Severe Weather Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-2">
+          {alerts.map(alert => (
+            <div
+              key={alert.id}
+              className="flex items-start gap-3 rounded-xl border px-4 py-3"
+              style={{
+                background: alert.severity === 'high' ? 'rgba(217,83,79,0.08)' : 'rgba(240,173,78,0.08)',
+                borderColor: alert.severity === 'high' ? 'rgba(217,83,79,0.2)' : 'rgba(240,173,78,0.2)'
+              }}
+            >
+              <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${alert.severity === 'high' ? 'text-red-400' : 'text-orange-400'}`} />
+              <div>
+                <p className={`text-xs font-bold ${alert.severity === 'high' ? 'text-red-400' : 'text-orange-400'}`}>{alert.title}</p>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{alert.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Main Stats */}
       <div className="grid-tiles-4">
         <div className="tile">
           <div className="tile-icon" style={{ background: 'rgba(234,157,99,0.10)' }}><Thermometer className="h-4 w-4" style={{ color: 'var(--primary)' }} /></div>
@@ -121,6 +196,72 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
         </div>
       </div>
 
+      {/* Sunrise / Sunset + Last Year */}
+      <div className="grid-tiles-3">
+        {sunriseSunset && (
+          <div className="tile">
+            <h3 className="tile-title">Sun & Moon</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sunrise className="h-5 w-5" style={{ color: '#F0AD4E' }} />
+                <div><p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>{sunriseSunset.sunrise}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Sunrise</p></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sunset className="h-5 w-5" style={{ color: '#E87040' }} />
+                <div><p className="text-xs font-semibold" style={{ color: 'var(--text)' }}>{sunriseSunset.sunset}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Sunset</p></div>
+              </div>
+            </div>
+            <p className="mt-2 text-center text-[10px]" style={{ color: 'var(--text-muted)' }}>Daylight: {sunriseSunset.dayLength}</p>
+          </div>
+        )}
+        {historical && (
+          <div className="tile">
+            <h3 className="tile-title">This Day Last Year</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{wmoEmoji(historical.weatherCode)}</span>
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{historical.maxTemp}° / {historical.minTemp}°</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoLabel(historical.weatherCode)}</p>
+              </div>
+            </div>
+            <p className="mt-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              {cur.temperature > historical.maxTemp ? 'Warmer' : 'Cooler'} than last year by {Math.abs(cur.temperature - historical.maxTemp).toFixed(1)}°
+            </p>
+          </div>
+        )}
+        <div className="tile">
+          <h3 className="tile-title">Conditions</h3>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>UV Index</span><span style={{ color: 'var(--text)' }}>{cur.uvIndex}</span></div>
+            <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>Pressure</span><span style={{ color: 'var(--text)' }}>{cur.pressure} hPa</span></div>
+            <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>Visibility</span><span style={{ color: 'var(--text)' }}>{(cur.visibility / 1000).toFixed(1)} km</span></div>
+            <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>Cloud Cover</span><span style={{ color: 'var(--text)' }}>{cur.cloudCover}%</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* AQI 24h Forecast */}
+      {aqiForecast.length > 0 && (
+        <div className="tile">
+          <h3 className="tile-title">PM2.5 Forecast (24h)</h3>
+          <div className="h-[160px]">
+            <Line data={{
+              labels: aqiForecast.map(d => d.time),
+              datasets: [{
+                data: aqiForecast.map(d => d.pm25),
+                borderColor: '#d48952',
+                backgroundColor: 'rgba(212,137,82,0.08)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 2,
+              }]
+            }} options={aqiChartOpts} />
+          </div>
+        </div>
+      )}
+
+      {/* Air Quality Index */}
       {airQuality && (
         <div className="tile" style={{ background: `linear-gradient(135deg, ${aqiColor(airQuality.pm25)}08, transparent)` }}>
           <div className="flex items-center justify-between mb-2">
@@ -137,13 +278,14 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
               </p>
               <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>PM2.5: {airQuality.pm25} | PM10: {airQuality.pm10} | O3: {airQuality.o3}</p>
             </div>
-            <div className="h-2 w-32 rounded-full hidden sm:block" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div className="h-2 w-32 rounded-full hidden sm:block" style={{ background: 'var(--tile-bg)' }}>
               <div className="h-2 rounded-full" style={{ width: `${Math.min(100, (airQuality.aqi / 5) * 100)}%`, background: aqiColor(airQuality.pm25) }} />
             </div>
           </div>
         </div>
       )}
 
+      {/* AI Recommendations */}
       <div className="tile">
         <h3 className="tile-title">AI Weather Intelligence</h3>
         <div className="grid-tiles-3">
@@ -169,6 +311,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
         </div>
       </div>
 
+      {/* 7-Day Forecast */}
       <div className="tile">
         <h3 className="tile-title">7-Day Forecast</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
@@ -186,6 +329,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
         </div>
       </div>
 
+      {/* Charts */}
       <div className="grid-tiles-2">
         <div className="tile">
           <div className="mb-3 flex items-center gap-2"><Thermometer className="h-4 w-4" style={{ color: 'var(--primary)' }} /><h3 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>Temperature (24H)</h3></div>
@@ -197,6 +341,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
         </div>
       </div>
 
+      {/* News */}
       {news.length > 0 && (
         <div className="tile">
           <div className="flex items-center justify-between mb-3">

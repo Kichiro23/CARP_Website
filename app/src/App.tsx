@@ -23,6 +23,7 @@ import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Security from '@/pages/Security';
 import ChatAgent from '@/components/ChatAgent';
+import Widget from '@/pages/Widget';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/register" element={<Register register={auth.register} googleLogin={auth.googleLogin} />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/widget" element={<Widget />} />
       <Route element={<Layout user={auth.user} logout={auth.logout} current={location.current} loading={auth.loading} theme={theme.theme} toggleTheme={theme.toggleTheme} />}>
         <Route path="/dashboard" element={<Dashboard
           current={location.current}

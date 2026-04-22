@@ -90,4 +90,22 @@ export interface NewsArticle {
   source?: string;
 }
 
+export interface SunriseSunset {
+  sunrise: string;
+  sunset: string;
+  dayLength: string;
+}
+
+export interface AQIForecast {
+  time: string;
+  pm25: number;
+}
+
+export interface HistoricalWeather {
+  date: string;
+  maxTemp: number;
+  minTemp: number;
+  weatherCode: number;
+}
+
 export type Theme = 'dark' | 'light';

@@ -175,6 +175,55 @@ export function wmoLabel(code: number): string {
   return map[code] || 'Unknown';
 }
 
+export async function fetchSunriseSunset(lat: number, lon: number): Promise<{ sunrise: string; sunset: string; dayLength: string } | null> {
+  const url = `${BASE_URLS.OPENMETEO}/forecast?latitude=${lat}&longitude=${lon}&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const daily = data.daily;
+  if (!daily?.sunrise?.[0] || !daily?.sunset?.[0]) return null;
+  const rise = new Date(daily.sunrise[0]);
+  const set = new Date(daily.sunset[0]);
+  const diffMs = set.getTime() - rise.getTime();
+  const hours = Math.floor(diffMs / 3600000);
+  const mins = Math.floor((diffMs % 3600000) / 60000);
+  return {
+    sunrise: rise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    sunset: set.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    dayLength: `${hours}h ${mins}m`,
+  };
+}
+
+export async function fetchHistoricalWeather(lat: number, lon: number): Promise<{ maxTemp: number; minTemp: number; weatherCode: number } | null> {
+  const lastYear = new Date();
+  lastYear.setFullYear(lastYear.getFullYear() - 1);
+  const dateStr = lastYear.toISOString().split('T')[0];
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dateStr}&end_date=${dateStr}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const daily = data.daily;
+  if (!daily?.temperature_2m_max?.[0]) return null;
+  return {
+    maxTemp: daily.temperature_2m_max[0],
+    minTemp: daily.temperature_2m_min[0],
+    weatherCode: daily.weather_code?.[0] ?? 0,
+  };
+}
+
+export async function fetchAQIForecast(lat: number, lon: number): Promise<Array<{ time: string; pm25: number }>> {
+  const url = `${BASE_URLS.OPENMETEO_AIR}/air-quality?latitude=${lat}&longitude=${lon}&hourly=pm2_5&timezone=auto&forecast_days=2`;
+  const res = await safeFetch(url);
+  if (!res) return [];
+  const data = await res.json();
+  const hourly = data.hourly;
+  if (!hourly?.time) return [];
+  return hourly.time.slice(0, 24).map((t: string, i: number) => ({
+    time: t.slice(11, 16),
+    pm25: hourly.pm2_5?.[i] ?? 0,
+  }));
+}
+
 export async function searchCitiesWeather(queries: string[]): Promise<Array<{ name: string; lat: number; lon: number; country: string; weather: WeatherCurrent | null; pm25: number | null }>> {
   const results = [];
   for (const query of queries.slice(0, 10)) {
