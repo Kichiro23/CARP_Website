@@ -172,12 +172,13 @@ After logging in, you will see the **Dashboard** with:
 
 Developed by **BSCPE 3C Students**
 
-| Name | Role |
-|------|------|
-| Rommel De Leon | Lead Developer |
-| Angela Sedigo | Frontend Developer |
-| John Punzalan | Backend Developer |
-| Rowella Lazaro | QA & Documentation |
+| Initials | Name | Role |
+|----------|------|------|
+| RD | Rommel De Leon | Lead Developer |
+| RG | Raiza Galang | UI/UX Designer |
+| AS | Angela Sedigo | Frontend Developer |
+| JP | John Punzalan | Backend Developer |
+| RL | Rowella Lazaro | QA & Documentation |
 
 ---
 
