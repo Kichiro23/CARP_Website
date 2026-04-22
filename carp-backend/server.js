@@ -56,11 +56,16 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
+let dbConnected = false;
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
+  .then(() => {
+    console.log('MongoDB Connected');
+    dbConnected = true;
+  })
   .catch(err => {
     console.error('MongoDB Connection Error:', err.message);
-    process.exit(1);
+    console.error('The server will continue running but database operations will fail.');
+    console.error('Fix your MONGODB_URI password in Render Environment Variables.');
   });
 
 // ============================================
