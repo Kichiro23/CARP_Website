@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History, Flame, Sprout, Sun, Users } from 'lucide-react';
-import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, fetchFireRisk, fetchUVData, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
+import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, fetchFireRisk, fetchUVData, isRateLimited, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
 import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
 import LocationSelector from '@/components/LocationSelector';
@@ -37,6 +37,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
   const [aqiForecast, setAqiForecast] = useState<AQIForecast[]>([]);
   const [shared, setShared] = useState(false);
   const [alerts, setAlerts] = useState<Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }>>([]);
+  const [showRateLimit, setShowRateLimit] = useState(false);
   const [fireRisk, setFireRisk] = useState<{ risk: string; riskColor: string } | null>(null);
   const [uvData, setUVData] = useState<{ uvMax: number; radiation: number } | null>(null);
   const [population, setPopulation] = useState(() => {
@@ -66,6 +67,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
       const w = await fetchWeather(current.lat, current.lng);
       setWeather(w);
       if (!w) { setError('Could not load weather data. Check your connection.'); setLoading(false); return; }
+      setShowRateLimit(isRateLimited());
 
       // Fetch secondary data in parallel
       const [p, aq, n, ss, hist, aqiF, fr, uv] = await Promise.all([
@@ -161,6 +163,14 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
           </button>
         </div>
       </div>
+
+      {/* Rate Limit Warning */}
+      {showRateLimit && (
+        <div className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs" style={{ background: 'rgba(240,173,78,0.08)', borderColor: 'rgba(240,173,78,0.25)', color: '#F0AD4E' }}>
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>API rate limit reached. Showing estimated data. Real data will return tomorrow.</span>
+        </div>
+      )}
 
       {/* Population + Clocks */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
