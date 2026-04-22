@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Menu, X, LogOut, User } from 'lucide-react';
+import { Menu, X, LogOut, User, Moon, Sun } from 'lucide-react';
 import type { User as UType } from '@/types';
+import type { Theme } from '@/types';
 
 const links = [
   { path: '/dashboard', label: 'Dashboard' },
@@ -16,7 +17,7 @@ const links = [
   { path: '/about', label: 'About' },
 ];
 
-export default function Navbar({ auth }: { auth: { user: UType | null; logout: () => void } }) {
+export default function Navbar({ auth, theme, toggleTheme }: { auth: { user: UType | null; logout: () => void }; theme: Theme; toggleTheme: () => void }) {
   const loc = useLocation();
   const nav = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -24,7 +25,7 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex items-center justify-between gap-3 px-4 md:px-6" style={{ height: 60, background: 'rgba(19,19,31,0.92)', backdropFilter: 'blur(24px)', borderBottom: '1px solid var(--tile-border)' }}>
+      <header className="sticky top-0 z-50 flex items-center justify-between gap-3 px-4 md:px-6" style={{ height: 60, background: 'var(--bg)', backdropFilter: 'blur(24px)', borderBottom: '1px solid var(--tile-border)' }}>
         <div className="flex items-center gap-3 min-w-0">
           <button className="md:hidden p-2" style={{ color: 'var(--text-secondary)' }} onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -46,6 +47,16 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
           })}
         </nav>
         <div className="flex items-center gap-2 shrink-0 min-w-0">
+          {/* Theme Toggle — always accessible */}
+          <button
+            onClick={toggleTheme}
+            className="flex h-9 w-9 items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95"
+            style={{ background: 'var(--tile-bg)', border: '1px solid var(--tile-border)', color: 'var(--text-secondary)' }}
+            title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+
           <div className="relative">
             <button onClick={() => setDdOpen(!ddOpen)} className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl min-w-0">
               {auth.user?.avatar ? (
@@ -58,7 +69,7 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
               <span className="hidden sm:inline text-sm font-semibold truncate max-w-[80px]" style={{ color: 'var(--text)' }}>{auth.user?.name?.split(' ')[0] || 'User'}</span>
             </button>
             {ddOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border overflow-hidden shadow-2xl z-50" style={{ background: 'rgba(26,26,46,0.96)', backdropFilter: 'blur(24px)', borderColor: 'var(--tile-border)' }}>
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border overflow-hidden shadow-2xl z-50" style={{ background: 'var(--bg-secondary)', backdropFilter: 'blur(24px)', borderColor: 'var(--tile-border)' }}>
                 <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--tile-border)' }}>
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>{auth.user?.name}</p>
                   <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{auth.user?.email}</p>
@@ -71,7 +82,16 @@ export default function Navbar({ auth }: { auth: { user: UType | null; logout: (
         </div>
       </header>
       {mobileOpen && (
-        <div className="fixed inset-0 top-[60px] z-40 overflow-y-auto p-4 md:hidden" style={{ background: 'rgba(19,19,31,0.96)', backdropFilter: 'blur(24px)' }}>
+        <div className="fixed inset-0 top-[60px] z-40 overflow-y-auto p-4 md:hidden" style={{ background: 'var(--bg)', backdropFilter: 'blur(24px)' }}>
+          {/* Mobile theme toggle */}
+          <button
+            onClick={() => { toggleTheme(); }}
+            className="flex w-full items-center gap-3 py-3 text-sm font-medium border-b"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" style={{ color: 'var(--primary)' }} /> : <Moon className="h-4 w-4" style={{ color: 'var(--primary)' }} />}
+            <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+          </button>
           {links.map(l => (
             <Link key={l.path} to={l.path} onClick={() => setMobileOpen(false)} className="block py-3 text-sm font-medium border-b" style={{ color: loc.pathname === l.path ? '#EA9D63' : 'var(--text-secondary)', borderColor: 'var(--border)' }}>{l.label}</Link>
           ))}
