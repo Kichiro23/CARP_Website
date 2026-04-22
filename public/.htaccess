@@ -2,10 +2,11 @@
   RewriteEngine On
   RewriteBase /
 
-  # SPA fallback for React Router
+  # SPA fallback for React Router (skip /api requests)
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !^/api
   RewriteRule . /index.html [L]
 </IfModule>
 
