@@ -176,11 +176,11 @@ Academic Year **2025-2026**
 
 | Name | Role |
 |------|------|
-| Rommel De Leon | Lead Developer |
-| Raiza Galang | UI/UX Designer |
-| Angela Sedigo | Frontend Developer |
-| John Punzalan | Backend Developer |
-| Rowella Lazaro | QA & Documentation |
+| Rommel Andrei L. De Leon | Lead Developer |
+| Raiza Charine H. Galang | UI/UX Designer |
+| Cristina Angela G. Sedigo | Frontend Developer |
+| John Mareign B. Punzalan | Backend Developer |
+| Rowella L. Lazaro | QA & Documentation |
 
 ---
 

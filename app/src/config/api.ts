@@ -14,9 +14,9 @@ export const DEFAULT_LOCATION = {
 };
 
 export const TEAM = [
-  { name: 'Rommel De Leon', role: 'Lead Developer', initials: 'RD' },
-  { name: 'Raiza Galang', role: 'UI/UX Designer', initials: 'RG' },
-  { name: 'Angela Sedigo', role: 'Frontend Developer', initials: 'AS' },
-  { name: 'John Punzalan', role: 'Backend Developer', initials: 'JP' },
-  { name: 'Rowella Lazaro', role: 'QA & Documentation', initials: 'RL' },
+  { name: 'Rommel Andrei L. De Leon', role: 'Lead Developer', initials: 'RD' },
+  { name: 'Raiza Charine H. Galang', role: 'UI/UX Designer', initials: 'RG' },
+  { name: 'Cristina Angela G. Sedigo', role: 'Frontend Developer', initials: 'AS' },
+  { name: 'John Mareign B. Punzalan', role: 'Backend Developer', initials: 'JP' },
+  { name: 'Rowella L. Lazaro', role: 'QA & Documentation', initials: 'RL' },
 ];
