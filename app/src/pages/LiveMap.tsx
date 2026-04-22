@@ -27,16 +27,27 @@ function MapController({ lat, lng }: { lat: number; lng: number }) {
 }
 
 const MAJOR_CITIES = [
-  'Manila, Philippines', 'Tokyo, Japan', 'New York, USA', 'London, UK',
-  'Singapore', 'Dubai, UAE', 'Sydney, Australia', 'Paris, France',
-  'Berlin, Germany', 'Mumbai, India', 'Beijing, China', 'Seoul, South Korea',
-  'Bangkok, Thailand', 'Jakarta, Indonesia', 'Cairo, Egypt', 'Nairobi, Kenya',
-  'Los Angeles, USA', 'Toronto, Canada', 'Mexico City, Mexico', 'Sao Paulo, Brazil',
-  'Buenos Aires, Argentina', 'Moscow, Russia', 'Istanbul, Turkey', 'Rome, Italy',
+  // Philippines
+  'Manila, Philippines', 'Quezon City, Philippines', 'Cebu City, Philippines', 'Davao City, Philippines',
+  'Baguio, Philippines', 'Iloilo City, Philippines', 'Bacolod, Philippines', 'Cagayan de Oro, Philippines',
+  'Zamboanga City, Philippines', 'Tacloban, Philippines', 'General Santos, Philippines', 'Dagupan, Philippines',
+  'Naga, Philippines', 'Legazpi, Philippines', 'Puerto Princesa, Philippines', 'Tagaytay, Philippines',
+  'Angeles, Philippines', 'Olongapo, Philippines', 'Batangas City, Philippines', 'Lucena, Philippines',
+  // Asia
+  'Tokyo, Japan', 'Seoul, South Korea', 'Beijing, China', 'Hong Kong',
+  'Bangkok, Thailand', 'Jakarta, Indonesia', 'Singapore', 'Kuala Lumpur, Malaysia',
+  'Hanoi, Vietnam', 'Taipei, Taiwan', 'Mumbai, India', 'Karachi, Pakistan',
+  'Dhaka, Bangladesh', 'Dubai, UAE', 'Riyadh, Saudi Arabia', 'Tehran, Iran',
+  'Istanbul, Turkey', 'Moscow, Russia',
+  // Europe
+  'London, UK', 'Paris, France', 'Berlin, Germany', 'Rome, Italy',
   'Madrid, Spain', 'Amsterdam, Netherlands', 'Vienna, Austria', 'Warsaw, Poland',
-  'Lagos, Nigeria', 'Cape Town, South Africa', 'Riyadh, Saudi Arabia', 'Tehran, Iran',
-  'Karachi, Pakistan', 'Dhaka, Bangladesh', 'Hanoi, Vietnam', 'Taipei, Taiwan',
-  'Hong Kong', 'Kuala Lumpur, Malaysia', 'Melbourne, Australia', 'Auckland, New Zealand',
+  // Americas
+  'New York, USA', 'Los Angeles, USA', 'Toronto, Canada', 'Mexico City, Mexico',
+  'Sao Paulo, Brazil', 'Buenos Aires, Argentina',
+  // Oceania & Africa
+  'Sydney, Australia', 'Melbourne, Australia', 'Auckland, New Zealand',
+  'Cairo, Egypt', 'Nairobi, Kenya', 'Lagos, Nigeria', 'Cape Town, South Africa',
 ];
 
 const STORAGE_KEY = 'carp_map_cities';

@@ -81,7 +81,7 @@ export default function CitySearch({ onSelect, placeholder = 'Search any city...
         {loading && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" style={{ color: 'var(--primary)' }} />}
       </div>
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[280px] overflow-y-auto rounded-xl border shadow-2xl" style={{ background: 'rgba(26,26,46,0.98)', backdropFilter: 'blur(24px)', borderColor: 'var(--tile-border)' }}>
+        <div className="absolute left-0 right-0 top-full z-[9999] mt-1 max-h-[280px] overflow-y-auto rounded-xl border shadow-2xl" style={{ background: 'rgba(26,26,46,0.98)', backdropFilter: 'blur(24px)', borderColor: 'var(--tile-border)' }}>
           {results.map((city, i) => (
             <button
               key={i}
@@ -98,7 +98,7 @@ export default function CitySearch({ onSelect, placeholder = 'Search any city...
         </div>
       )}
       {open && query.trim().length >= 2 && !loading && results.length === 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border p-4 text-center shadow-2xl" style={{ background: 'rgba(26,26,46,0.98)', borderColor: 'var(--tile-border)' }}>
+        <div className="absolute left-0 right-0 top-full z-[9999] mt-1 rounded-xl border p-4 text-center shadow-2xl" style={{ background: 'rgba(26,26,46,0.98)', borderColor: 'var(--tile-border)' }}>
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No cities found. Try a different name.</p>
         </div>
       )}
