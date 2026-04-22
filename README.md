@@ -16,7 +16,6 @@ Developed by **BSCPE 3C Students** as a capstone project.
 
 - [Features](#features)
 - [User Manual](#user-manual)
-- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [API Configuration](#api-configuration)
 - [Deployment](#deployment)
@@ -174,24 +173,6 @@ After logging in, you will see the **Dashboard** with:
 - Click your **avatar** → **"Log Out"**
 - You will be redirected to the login page
 
----
-
-## Screenshots
-
-| Page | Description |
-|------|-------------|
-| Landing Page | Animated intro with cloud video background |
-| Dashboard | Main weather overview with charts |
-| Live Map | Interactive world map with city markers & search |
-| Compare | Side-by-side city weather comparison |
-| Analytics | Detailed weather trend charts |
-| Trends | Historical weather pattern analysis |
-| Alerts | Custom weather notification settings |
-| News | Climate and environmental news feed |
-| Profile | User account & saved locations |
-| Settings | Theme, units, and cache management |
-
----
 
 ## Tech Stack
 
