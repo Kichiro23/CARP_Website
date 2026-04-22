@@ -22,6 +22,7 @@ import About from '@/pages/About';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
 import Security from '@/pages/Security';
+import ChatAgent from '@/components/ChatAgent';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -70,6 +71,7 @@ export default function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || 'dummy'}>
       {app}
+      <ChatAgent />
     </GoogleOAuthProvider>
   );
 }

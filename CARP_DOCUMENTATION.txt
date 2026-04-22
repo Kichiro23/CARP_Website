@@ -1,0 +1,504 @@
+================================================================================
+  CARP - CLIMATE & AIR RESEARCH PLATFORM
+  FULL TECHNICAL DOCUMENTATION
+  Version 3.0 | April 2026
+  Developed by BSCpE 3C Students 2026
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1. Project Overview
+2. System Architecture
+3. Frontend Documentation
+4. Backend Documentation
+5. API Reference
+6. Database Schema
+7. Authentication Flow
+8. Google OAuth Setup
+9. External APIs
+10. Design System
+11. File Inventory
+12. Build & Deployment
+13. Troubleshooting
+14. Changelog
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+NAME:        CARP (Climate & Air Research Platform)
+TYPE:        Full-stack web application
+PURPOSE:     School project for BSCpE 3C - Weather monitoring and 
+             air quality research platform with real data
+
+FRONTEND:    React 19 + TypeScript + Vite + Tailwind CSS
+BACKEND:     Node.js + Express + TypeScript + JSON database
+HOSTING:     Static frontend (deployed), Node.js backend (local/server)
+
+TEAM:
+  - Rommel De Leon (Lead Developer)
+  - Raiza Galang (UI/UX Designer)
+  - Angela Sedigo (Frontend Developer)
+  - John Punzalan (Backend Developer)
+  - Rowella Lazaro (QA & Documentation)
+
+================================================================================
+2. SYSTEM ARCHITECTURE
+================================================================================
+
+  +-------------------+         +-------------------+         +-------------------+
+  |   React Frontend  | <-----> |  Express Backend  | <-----> |   External APIs   |
+  |   (Static Host)   |  HTTP   |   (Node.js)       |  HTTP   |                   |
+  |                   |         |                   |         | - Open-Meteo      |
+  | - 15 Pages        |         | - Auth Routes     |         | - RSS2JSON        |
+  | - Video BG        |         | - JWT Tokens      |         | - REST Countries  |
+  | - Leaflet Map     |         | - bcrypt          |         |                   |
+  | - Chart.js        |         | - JSON DB         |         |                   |
+  +-------------------+         +-------------------+         +-------------------+
+         |                              |
+         |  localStorage (JWT)          |  carp.json (data)
+         |                              |
+         +------------------------------+
+
+================================================================================
+3. FRONTEND DOCUMENTATION
+================================================================================
+
+STACK:
+  - React 19.0.0
+  - TypeScript 5.6.0
+  - Vite 7.3.0
+  - Tailwind CSS 3.4.0
+  - React Router 7.1.0 (HashRouter)
+
+ROUTING:
+  /               -> Landing Page (video background)
+  /login          -> Login (email + Google)
+  /register       -> Registration (with city/country)
+  /dashboard      -> Weather dashboard (auth required)
+  /map            -> Live map with 75+ cities (auth required)
+  /countries      -> Country explorer (auth required)
+  /compare        -> City comparison tool (auth required)
+  /analytics      -> Weather analytics charts (auth required)
+  /trends         -> Historical trends (auth required)
+  /alerts         -> Weather alerts (auth required)
+  /news           -> Climate news feed (auth required)
+  /about          -> About the team (auth required)
+  /profile        -> User profile (auth required)
+  /settings       -> App settings (auth required)
+  /security       -> Security settings (auth required)
+
+AUTHENTICATION (Frontend):
+  - useAuth hook manages auth state
+  - JWT token stored in localStorage as 'carp_token'
+  - Refresh token stored as 'carp_refresh'
+  - User session stored as 'carp_session'
+  - Auth check runs on app mount
+  - Logout clears all stored data and calls backend
+
+COMPONENTS:
+  CarpLogo.tsx        - Logo image component, accepts size prop
+  Footer.tsx          - Site footer with team credit
+  GoogleSignIn.tsx    - Real Google Identity Services button
+  Layout.tsx          - Auth page wrapper (video BG + navbar + footer)
+  Navbar.tsx          - Glass navbar with theme toggle, user dropdown
+  VideoBackground.tsx - Looping cloud video on all pages
+
+PAGES (15 total):
+  All pages use glassmorphism tile system (.tile class)
+  Grid responsive: mobile 1-col, tablet 2-col, desktop 3-4 col
+  Global text protection: break-word, line-height 1.5, truncation
+
+================================================================================
+4. BACKEND DOCUMENTATION
+================================================================================
+
+STACK:
+  - Node.js 20+
+  - Express 4.19.0
+  - TypeScript 5.4.0
+  - bcryptjs 2.4.3 (password hashing)
+  - jsonwebtoken 9.0.2 (JWT)
+  - cors 2.8.5 (cross-origin)
+  - dotenv 16.4.0 (environment)
+
+DATABASE:
+  Type:        JSON file-based (carp.json)
+  Tables:      users, refreshTokens, savedCities
+  Persistence: Auto-save on exit/SIGINT
+  Path:        Configurable via DB_PATH env var
+
+WHY JSON INSTEAD OF SQL:
+  The sandbox environment cannot compile native SQLite modules
+  (better-sqlite3 requires node-gyp which needs symlinks). JSON DB
+  provides the same functionality with zero compilation - just
+  read/write JSON to a file.
+
+SERVER START:
+  cd carp-backend
+  npm install
+  npm run build    # Compiles TypeScript
+  node dist/index.js
+
+================================================================================
+5. API REFERENCE
+================================================================================
+
+BASE URL: http://localhost:3001
+
+AUTH ROUTES (/api/auth):
+
+  POST /register
+    Body: { name, email, password, city?, country? }
+    Response: { user: { id, name, email, ... }, token, refreshToken }
+    Status: 201 created, 409 duplicate, 400 validation error
+
+  POST /login
+    Body: { email, password }
+    Response: { user, token, refreshToken }
+    Status: 200 success, 401 invalid credentials
+
+  POST /google
+    Body: { googleId, email, name, picture? }
+    Response: { user, token, refreshToken }
+    Status: 200 success
+
+  GET /me
+    Headers: Authorization: Bearer <token>
+    Response: { user }
+    Status: 200 success, 401/403 auth errors
+
+  POST /logout
+    Body: { refreshToken }
+    Response: { message: "Logged out" }
+
+  POST /refresh
+    Body: { refreshToken }
+    Response: { token }
+
+USER ROUTES (/api/user):
+
+  GET /profile
+    Headers: Authorization: Bearer <token>
+    Response: { user }
+
+  PATCH /profile
+    Headers: Authorization: Bearer <token>
+    Body: { name?, email?, city?, country?, avatar? }
+    Response: { user }
+
+  POST /change-password
+    Headers: Authorization: Bearer <token>
+    Body: { currentPassword, newPassword }
+    Response: { message: "Password updated" }
+
+  DELETE /account
+    Headers: Authorization: Bearer <token>
+    Response: { message: "Account deleted" }
+
+HEALTH CHECK:
+  GET /api/health
+    Response: { status: "ok", timestamp }
+
+================================================================================
+6. DATABASE SCHEMA
+================================================================================
+
+TABLE: users
+  id           INTEGER (auto-increment)
+  name         TEXT (required)
+  email        TEXT (unique, required)
+  password     TEXT (bcrypt hash, null for Google users)
+  avatar       TEXT (URL or null)
+  auth_provider TEXT ('local' or 'google')
+  google_id    TEXT (null for local users)
+  city         TEXT (nullable)
+  country      TEXT (nullable)
+  created_at   DATETIME (auto)
+
+TABLE: refresh_tokens
+  id           INTEGER (auto-increment)
+  user_id      INTEGER (foreign key)
+  token        TEXT (unique, 128-char hex)
+  expires_at   DATETIME (30 days from creation)
+  created_at   DATETIME (auto)
+
+TABLE: saved_cities
+  id           INTEGER (auto-increment)
+  user_id      INTEGER (foreign key)
+  city_name    TEXT (required)
+  country      TEXT (nullable)
+  lat          REAL (nullable)
+  lon          REAL (nullable)
+  created_at   DATETIME (auto)
+
+================================================================================
+7. AUTHENTICATION FLOW
+================================================================================
+
+EMAIL/PASSWORD:
+  1. User fills form on /register
+  2. Frontend POST /api/auth/register with name, email, password
+  3. Backend hashes password with bcrypt (12 rounds)
+  4. Backend saves user to JSON database
+  5. Backend generates JWT token (24h expiry) + refresh token (30d)
+  6. Frontend stores token in localStorage, redirects to /dashboard
+
+  Login:
+  1. User fills form on /login
+  2. Frontend POST /api/auth/login
+  3. Backend compares password with bcrypt.compare()
+  4. Backend returns JWT + refresh token
+  5. Frontend stores, redirects
+
+GOOGLE OAUTH:
+  1. User clicks "Sign in with Google"
+  2. Google's script loads accounts.google.com/gsi/client
+  3. Google popup appears, user selects account
+  4. Google returns JWT credential with user's data
+  5. Frontend decodes JWT, extracts name, email, picture, googleId
+  6. Frontend POST /api/auth/google with this data
+  7. Backend finds or creates user by google_id
+  8. Backend returns CARP JWT token
+  9. User is logged in
+
+PROTECTED ROUTES:
+  1. User navigates to /dashboard
+  2. Layout checks auth.isAuthenticated
+  3. If not authenticated -> redirect to /login
+  4. If authenticated -> render page with video background
+
+LOGOUT:
+  1. User clicks Logout
+  2. Frontend POST /api/auth/logout with refreshToken
+  3. Backend deletes refresh token from database
+  4. Frontend clears localStorage
+  5. User redirected to landing page
+
+================================================================================
+8. GOOGLE OAUTH SETUP
+================================================================================
+
+STEP 1: Google Cloud Console
+  - Visit https://console.cloud.google.com/
+  - Sign in with Google account
+  - Create new project: "CARP Auth"
+
+STEP 2: Enable APIs
+  - APIs & Services > Library
+  - Enable "Google Identity Toolkit API"
+  - Enable "Google+ API"
+
+STEP 3: OAuth Consent Screen
+  - APIs & Services > OAuth consent screen
+  - User Type: External
+  - App name: "CARP"
+  - User support email: your-email@gmail.com
+  - Developer contact: your-email@gmail.com
+  - Scopes: email, profile, openid
+  - Test users: add your Gmail
+
+STEP 4: Credentials
+  - APIs & Services > Credentials
+  - Create Credentials > OAuth client ID
+  - Application type: Web application
+  - Name: "CARP Web"
+  - Authorized JS origins:
+    * http://localhost:5173
+    * https://tcuw4as3x5q7g.kimi.page
+  - Authorized redirect URIs:
+    * https://tcuw4as3q5q7g.kimi.page
+  - Click Create
+  - Copy Client ID and Client Secret
+
+STEP 5: Configure App
+  - Add Client ID to app/.env: VITE_GOOGLE_CLIENT_ID=...
+  - Add Client ID + Secret to carp-backend/.env
+  - Restart backend server
+
+================================================================================
+9. EXTERNAL APIs
+================================================================================
+
+OPEN-METEO (Weather):
+  Endpoint: https://api.open-meteo.com/v1/forecast
+  Params: latitude, longitude, current, hourly, daily
+  Data: Temperature, humidity, wind, UV, precipitation, weather codes
+  Rate Limit: None (free, open)
+
+OPEN-METEO AIR QUALITY:
+  Endpoint: https://api.open-meteo.com/air-quality
+  Params: latitude, longitude, current
+  Data: PM2.5, PM10, ozone, nitrogen dioxide
+  Rate Limit: None
+
+RSS2JSON (News):
+  Endpoint: https://api.rss2json.com/v1/api.json
+  Feeds: The Guardian Environment, BBC Science & Environment
+  Data: Article titles, links, thumbnails, dates
+  Rate Limit: 100 requests/day (free tier)
+
+REST COUNTRIES:
+  Endpoint: https://restcountries.com/v3.1/all
+  Data: Country names, capitals, flags, populations, coordinates
+  Rate Limit: None (open)
+
+GOOGLE IDENTITY SERVICES:
+  Endpoint: https://accounts.google.com/gsi/client
+  Purpose: Real Google Sign-In button + OAuth flow
+  Data: User profile (name, email, photo)
+
+================================================================================
+10. DESIGN SYSTEM
+================================================================================
+
+COLOR PALETTE:
+  Primary:    #EA9D63 (warm orange)
+  Accent:     #A2B7C7 (cool blue-gray)
+  Background: #13131f (dark) / #F0F2F7 (light)
+  Surface:    rgba(255,255,255,0.03) (glass tiles)
+  Text:       #EAEFEF (dark mode) / #2a2a35 (light mode)
+  Muted:      #9a9da8
+
+TYPOGRAPHY:
+  Font:       DM Sans (Google Fonts)
+  Weights:    400 (body), 500 (medium), 700 (bold)
+  Line height: 1.5 (global)
+
+GLASSMORPHISM:
+  Background: rgba(255,255,255,0.03)
+  Border:     1px solid var(--tile-border) [rgba(255,255,255,0.15)]
+  Blur:       blur(16px) saturate(1.4)
+  Radius:     16px (tiles), 12px (inputs)
+
+ANIMATIONS:
+  Landing:    Cloud video (60% opacity) + CSS gradient shift
+  Auth pages: Cloud video (35% opacity)
+  Orbs:       Removed in favor of video on all pages
+  Transitions: 0.2s ease (hovers), 1s ease (page load)
+
+RESPONSIVE:
+  Mobile:  <640px  - single column, stacked nav
+  Tablet:  640-1024px - 2 columns
+  Desktop: >1024px  - 3-4 columns, horizontal nav
+
+TEXT PROTECTION:
+  Global:    word-wrap: break-word, overflow-wrap: break-word
+  Inputs:    padding-left: 44px (icon space via inline style)
+  Truncate:  white-space: nowrap, overflow: hidden, ellipsis
+  Username:  max-width 60-100px with truncation
+
+================================================================================
+11. FILE INVENTORY
+================================================================================
+
+FRONTEND (app/src/): 36 source files
+  components/     6 files
+  hooks/          2 files
+  pages/          15 files
+  services/       6 files
+  types/          1 file
+  main.tsx
+  App.tsx
+  index.css
+  lib/chart.ts
+
+BACKEND (carp-backend/src/): 7 source files
+  db/             3 files
+  middleware/     1 file
+  routes/         2 files
+  index.ts
+
+PUBLIC ASSETS:
+  logo.png        CARP logo (AI generated, transparent bg)
+  videos/
+    clouds.mp4    Landing page background (12s loop)
+
+TOTAL PROJECT:
+  Source files:   43
+  Config files:   8
+  Documentation:  2
+  Lines of code:  ~6,500+
+
+================================================================================
+12. BUILD & DEPLOYMENT
+================================================================================
+
+DEVELOPMENT:
+  Terminal 1: cd carp-backend && node dist/index.js
+  Terminal 2: cd app && npm run dev
+  Access:     http://localhost:5173
+
+PRODUCTION BUILD:
+  cd app && npm run build
+  Output:     app/dist/
+  Deploy:     Copy dist/ to static hosting
+
+DEPLOYED URL:
+  Frontend:   https://tcuw4as3x5q7g.kimi.page
+  Backend:    Requires Node.js server hosting
+
+BACKEND HOSTING OPTIONS:
+  - Render.com (free tier)
+  - Railway.app
+  - Heroku
+  - VPS (DigitalOcean, AWS, GCP)
+
+================================================================================
+13. TROUBLESHOOTING
+================================================================================
+
+ISSUE: "Server error. Is the backend running?"
+  - Check backend is running: curl http://localhost:3001/api/health
+  - Verify VITE_API_URL in app/.env matches backend port
+  - Check firewall isn't blocking port 3001
+
+ISSUE: Google Sign-In button not showing
+  - Verify VITE_GOOGLE_CLIENT_ID is set in app/.env
+  - Check browser console for Google script errors
+  - Ensure domain is in Authorized JS Origins in Google Cloud
+
+ISSUE: Passwords not working after backend restart
+  - JSON database persists to carp.json file
+  - Check carp.json exists and is readable
+  - Passwords are bcrypt hashed, cannot be recovered
+
+ISSUE: Icons overlapping placeholder text
+  - Fixed: All inputs use inline style paddingLeft: 44px
+  - The glass-input CSS padding shorthand was overriding Tailwind classes
+
+ISSUE: Map not loading
+  - Check leaflet CSS is imported
+  - Check internet connection (Leaflet tiles load from CDN)
+
+================================================================================
+14. CHANGELOG
+================================================================================
+
+v3.0 (Current)
+  - New modern cloud logo generated
+  - Real Node.js + Express backend with JSON database
+  - JWT authentication with bcrypt password hashing
+  - Google OAuth 2.0 support
+  - Video background on ALL pages (not just landing)
+  - Fixed all text overlapping issues (7 inputs corrected)
+  - Full README and documentation
+
+v2.x
+  - Animated background orbs on authenticated pages
+  - 75+ cities with Philippine coverage
+  - Live map with search and fly-to
+  - Circular developer avatars
+  - Glass navbar with active highlights
+
+v1.x
+  - Initial React rebuild from HTML
+  - Open-Meteo weather integration
+  - Chart.js analytics
+  - iOS 26 glassmorphism design
+  - Dark/light mode
+  - localStorage authentication (client-side only)
+
+================================================================================
+                         END OF DOCUMENTATION
+================================================================================
