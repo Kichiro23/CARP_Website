@@ -16,7 +16,7 @@ function createMarkerIcon(pm25: number | null) {
     className: '',
     iconSize: [36, 36],
     iconAnchor: [18, 36],
-    html: `<div style="width:36px;height:36px;border-radius:50%;background:${color}20;border:2.5px solid ${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#EAEFEF;backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.3);">${pm25 !== null ? Math.round(pm25) : '?'}</div>`,
+    html: `<div style="width:36px;height:36px;border-radius:50%;background:${color}20;border:2.5px solid ${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text);backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,0.3);">${pm25 !== null ? Math.round(pm25) : '?'}</div>`,
   });
 }
 
@@ -203,7 +203,7 @@ export default function LiveMap({ current }: Props) {
           <MapController lat={center[0]} lng={center[1]} />
           <Marker position={[current.lat, current.lng]} icon={L.divIcon({
             className: '', iconSize: [40, 40], iconAnchor: [20, 40],
-            html: `<div style="width:40px;height:40px;border-radius:50%;background:#EA9D6330;border:3px solid #EA9D63;display:flex;align-items:center;justify-content:center;font-size:16px;animation:pulse 2s infinite;">&#x1F4CD;</div>`,
+            html: `<div style="width:40px;height:40px;border-radius:50%;background:#EA9D6330;border:3px solid #EA9D63;display:flex;align-items:center;justify-content:center;font-size:16px;animation:pulse 2s infinite;color:var(--text);">&#x1F4CD;</div>`,
           })}>
             <Popup><div className="min-w-[120px]"><p className="text-xs font-bold" style={{ color: '#EAEFEF' }}>{current.name}</p><p className="text-[10px]" style={{ color: '#9a9da8' }}>Your selected location</p></div></Popup>
           </Marker>

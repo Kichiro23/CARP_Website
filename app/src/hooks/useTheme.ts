@@ -8,6 +8,7 @@ export function useTheme() {
   useEffect(() => {
     localStorage.setItem('carp-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.colorScheme = theme;
   }, [theme]);
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   return { theme, toggleTheme, isDark: theme === 'dark' };
