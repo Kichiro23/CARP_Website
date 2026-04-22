@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MapPin, RefreshCw, Navigation, X } from 'lucide-react';
+import { MapPin, RefreshCw, Navigation, X, CloudRain, Cloud, Layers, Thermometer, Droplets, Wind, Eye } from 'lucide-react';
 import { fetchWeather, fetchPM25, wmoEmoji, wmoLabel, aqiColor } from '@/services/weatherApi';
 import CitySearch from '@/components/CitySearch';
 import type { SavedLocation } from '@/hooks/useLocation';
@@ -23,6 +23,33 @@ function createMarkerIcon(pm25: number | null) {
 function MapController({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => { map.setView([lat, lng], 10); }, [lat, lng, map]);
+  return null;
+}
+
+function OverlayLayers({ precip, clouds }: { precip: boolean; clouds: boolean }) {
+  const map = useMap();
+  const precipRef = useRef<any>(null);
+  const cloudsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (precip && !precipRef.current) {
+      precipRef.current = L.tileLayer('https://tile.open-meteo.com/precipitation/{z}/{x}/{y}.png', { opacity: 0.5 }).addTo(map);
+    } else if (!precip && precipRef.current) {
+      map.removeLayer(precipRef.current);
+      precipRef.current = null;
+    }
+    if (clouds && !cloudsRef.current) {
+      cloudsRef.current = L.tileLayer('https://tile.open-meteo.com/cloudcover/{z}/{x}/{y}.png', { opacity: 0.4 }).addTo(map);
+    } else if (!clouds && cloudsRef.current) {
+      map.removeLayer(cloudsRef.current);
+      cloudsRef.current = null;
+    }
+    return () => {
+      if (precipRef.current) { map.removeLayer(precipRef.current); precipRef.current = null; }
+      if (cloudsRef.current) { map.removeLayer(cloudsRef.current); cloudsRef.current = null; }
+    };
+  }, [precip, clouds, map]);
+
   return null;
 }
 
@@ -72,6 +99,9 @@ export default function LiveMap({ current }: Props) {
   const [markers, setMarkers] = useState<CityMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [center, setCenter] = useState<[number, number]>([current.lat, current.lng]);
+  const [selected, setSelected] = useState<CityMarker | null>(null);
+  const [showPrecip, setShowPrecip] = useState(false);
+  const [showClouds, setShowClouds] = useState(false);
 
   useEffect(() => { setCenter([current.lat, current.lng]); }, [current.lat, current.lng]);
 
@@ -123,9 +153,14 @@ export default function LiveMap({ current }: Props) {
 
   const removeCustomCity = (name: string) => {
     const custom = getCustomCities();
-    const updated = custom.filter(c => !c.startsWith(name));
+    // Fix: use exact match instead of startsWith to prevent accidental deletions
+    const updated = custom.filter(c => {
+      const parts = c.split(',');
+      return parts[0]?.trim() !== name;
+    });
     saveCustomCities(updated);
     setMarkers(prev => prev.filter(m => !(m.isCustom && m.name === name)));
+    if (selected?.name === name) setSelected(null);
   };
 
   const [locating, setLocating] = useState(false);
@@ -155,6 +190,8 @@ export default function LiveMap({ current }: Props) {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
+
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="flex h-full flex-col -m-4 md:-m-6">
@@ -196,10 +233,44 @@ export default function LiveMap({ current }: Props) {
             ))}
           </div>
         </div>
+        {/* Layer toggles */}
+        <div className="mt-2 flex gap-2">
+          <button
+            onClick={() => setShowPrecip(p => !p)}
+            className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-medium transition-all"
+            style={{
+              borderColor: showPrecip ? '#3b82f6' : 'var(--tile-border)',
+              background: showPrecip ? 'rgba(59,130,246,0.10)' : 'var(--tile-bg)',
+              color: showPrecip ? '#3b82f6' : 'var(--text-secondary)',
+            }}
+          >
+            <CloudRain className="h-3 w-3" /> Precipitation
+          </button>
+          <button
+            onClick={() => setShowClouds(c => !c)}
+            className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-medium transition-all"
+            style={{
+              borderColor: showClouds ? '#A2B7C7' : 'var(--tile-border)',
+              background: showClouds ? 'rgba(162,183,199,0.10)' : 'var(--tile-bg)',
+              color: showClouds ? '#A2B7C7' : 'var(--text-secondary)',
+            }}
+          >
+            <Cloud className="h-3 w-3" /> Cloud Cover
+          </button>
+          <button
+            onClick={() => { setShowPrecip(false); setShowClouds(false); }}
+            className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-medium transition-all"
+            style={{ borderColor: 'var(--tile-border)', background: 'var(--tile-bg)', color: 'var(--text-muted)' }}
+          >
+            <Layers className="h-3 w-3" /> Clear Overlays
+          </button>
+        </div>
       </div>
-      <div className="flex-1 mx-4 md:mx-6 mb-4 md:mb-6 min-h-[400px] rounded-xl overflow-hidden border" style={{ borderColor: 'var(--tile-border)' }}>
+
+      <div className="flex-1 mx-4 md:mx-6 mb-4 md:mb-6 min-h-[400px] rounded-xl overflow-hidden border relative" style={{ borderColor: 'var(--tile-border)' }}>
         <MapContainer center={center} zoom={10} scrollWheelZoom style={{ height: '100%', width: '100%', background: '#1a1a2e' }}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <OverlayLayers precip={showPrecip} clouds={showClouds} />
           <MapController lat={center[0]} lng={center[1]} />
           <Marker position={[current.lat, current.lng]} icon={L.divIcon({
             className: '', iconSize: [40, 40], iconAnchor: [20, 40],
@@ -208,7 +279,14 @@ export default function LiveMap({ current }: Props) {
             <Popup><div className="min-w-[120px]"><p className="text-xs font-bold" style={{ color: '#EAEFEF' }}>{current.name}</p><p className="text-[10px]" style={{ color: '#9a9da8' }}>Your selected location</p></div></Popup>
           </Marker>
           {markers.map(m => (
-            <Marker key={`${m.name}-${m.lat}`} position={[m.lat, m.lng]} icon={createMarkerIcon(m.pm25)}>
+            <Marker
+              key={`${m.name}-${m.lat}`}
+              position={[m.lat, m.lng]}
+              icon={createMarkerIcon(m.pm25)}
+              eventHandlers={{
+                click: () => setSelected(m),
+              }}
+            >
               <Popup>
                 <div className="min-w-[140px]">
                   <div className="flex items-center justify-between">
@@ -230,6 +308,42 @@ export default function LiveMap({ current }: Props) {
             </Marker>
           ))}
         </MapContainer>
+
+        {/* Selected city detail panel */}
+        {selected && selected.weather && (
+          <div className="absolute right-3 top-3 z-[400] w-56 rounded-xl border p-3 shadow-xl" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--tile-border)', backdropFilter: 'blur(16px)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold" style={{ color: 'var(--text)' }}>{selected.name}</h3>
+              <button onClick={() => setSelected(null)} className="rounded p-0.5 hover:bg-white/10"><X className="h-3 w-3" style={{ color: 'var(--text-muted)' }} /></button>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xl">{wmoEmoji(selected.weather.current.weatherCode)}</span>
+              <div>
+                <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>{selected.weather.current.temperature}°</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoLabel(selected.weather.current.weatherCode)}</p>
+              </div>
+            </div>
+            <div className="space-y-1.5 mb-2">
+              <div className="flex justify-between text-[10px]"><span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Droplets className="h-3 w-3" />Humidity</span><span style={{ color: 'var(--text)' }}>{selected.weather.current.humidity}%</span></div>
+              <div className="flex justify-between text-[10px]"><span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Wind className="h-3 w-3" />Wind</span><span style={{ color: 'var(--text)' }}>{selected.weather.current.windSpeed} km/h</span></div>
+              <div className="flex justify-between text-[10px]"><span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Eye className="h-3 w-3" />Visibility</span><span style={{ color: 'var(--text)' }}>{(selected.weather.current.visibility / 1000).toFixed(1)} km</span></div>
+              <div className="flex justify-between text-[10px]"><span className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><Thermometer className="h-3 w-3" />PM2.5</span><span style={{ color: selected.pm25 !== null ? aqiColor(selected.pm25) : 'var(--text)' }}>{selected.pm25 ?? '--'}</span></div>
+            </div>
+            {/* 3-day mini forecast */}
+            <div className="flex gap-1">
+              {selected.weather.daily.slice(0, 3).map((d, i) => {
+                const date = new Date(d.time);
+                return (
+                  <div key={i} className="flex-1 text-center rounded-lg border p-1" style={{ borderColor: 'var(--tile-border)', background: 'rgba(255,255,255,0.02)' }}>
+                    <p className="text-[8px]" style={{ color: 'var(--text-muted)' }}>{DAYS[date.getDay()]}</p>
+                    <p className="text-sm">{wmoEmoji(d.weatherCode)}</p>
+                    <p className="text-[10px] font-bold" style={{ color: 'var(--text)' }}>{d.maxTemp}°</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

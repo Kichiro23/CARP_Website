@@ -1,23 +1,19 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Menu, X, LogOut, User, Moon, Sun } from 'lucide-react';
+import SoundscapeBar from './SoundscapeBar';
 import type { User as UType } from '@/types';
 import type { Theme } from '@/types';
 
 const links = [
   { path: '/dashboard', label: 'Dashboard' },
   { path: '/map', label: 'Live Map' },
-  { path: '/countries', label: 'Countries' },
-  { path: '/compare', label: 'Compare' },
-  { path: '/air-quality', label: 'Air Quality' },
+  { path: '/explore', label: 'Explore' },
   { path: '/analytics', label: 'Analytics' },
-  { path: '/battle', label: 'Battle' },
-  { path: '/timemachine', label: 'Time Machine' },
-  { path: '/typhoons', label: 'Typhoons' },
-  { path: '/heatmap', label: 'Heatmap' },
-  { path: '/holidays', label: 'Holidays' },
+  { path: '/tools', label: 'Tools' },
+  { path: '/environment', label: 'Environment' },
   { path: '/journal', label: 'Journal' },
-  { path: '/zen', label: 'Zen' },
+  { path: '/air-quality', label: 'Air Quality' },
   { path: '/news', label: 'News' },
   { path: '/about', label: 'About' },
 ];
@@ -52,6 +48,7 @@ export default function Navbar({ auth, theme, toggleTheme }: { auth: { user: UTy
           })}
         </nav>
         <div className="flex items-center gap-2 shrink-0 min-w-0">
+          <SoundscapeBar />
           {/* Theme Toggle — always accessible */}
           <button
             onClick={toggleTheme}

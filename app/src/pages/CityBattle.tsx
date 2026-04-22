@@ -1,160 +1,172 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Swords, Trophy, Crown, RotateCcw } from 'lucide-react';
-import CitySearch from '@/components/CitySearch';
-import { fetchWeather, fetchPM25, wmoEmoji, wmoLabel } from '@/services/weatherApi';
-import type { WeatherData } from '@/types';
+import { useState, useEffect } from 'react';
+import { Trophy, Wind, Droplets, Sun, MapPin, Zap } from 'lucide-react';
+import { wmoEmoji, wmoDescription } from '@/services/weatherApi';
 
-interface CityData {
+interface City {
   name: string;
-  country: string;
-  weather: WeatherData | null;
-  pm25: number | null;
+  lat: number;
+  lon: number;
 }
 
-function getScore(c: CityData): number {
-  if (!c.weather) return 0;
-  let s = 50;
-  s += c.weather.current.temperature;
-  s += c.weather.current.humidity * 0.3;
-  s += c.weather.current.windSpeed * 0.5;
-  s -= (c.pm25 || 0) * 0.5;
-  return Math.round(s);
+const CITIES: City[] = [
+  { name: 'Manila', lat: 14.5995, lon: 120.9842 },
+  { name: 'Cebu', lat: 10.3157, lon: 123.8854 },
+  { name: 'Davao', lat: 7.1907, lon: 125.4553 },
+  { name: 'Baguio', lat: 16.4023, lon: 120.5960 },
+  { name: 'Quezon City', lat: 14.6760, lon: 121.0437 },
+  { name: 'Makati', lat: 14.5547, lon: 121.0244 },
+  { name: 'Iloilo', lat: 10.7202, lon: 122.5621 },
+  { name: 'Cagayan de Oro', lat: 8.4542, lon: 124.6319 },
+];
+
+interface CityWeather {
+  city: City;
+  temp: number;
+  wind: number;
+  humidity: number;
+  weatherCode: number;
+  uv: number;
+}
+
+async function fetchCityWeather(city: City): Promise<CityWeather | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=uv_index_max&timezone=auto`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return {
+      city,
+      temp: data.current?.temperature_2m ?? 0,
+      wind: data.current?.wind_speed_10m ?? 0,
+      humidity: data.current?.relative_humidity_2m ?? 0,
+      weatherCode: data.current?.weather_code ?? 0,
+      uv: data.daily?.uv_index_max?.[0] ?? 0,
+    };
+  } catch { return null; }
 }
 
 export default function CityBattle() {
-  const [cityA, setCityA] = useState<CityData | null>(null);
-  const [cityB, setCityB] = useState<CityData | null>(null);
-  const [, setLoading] = useState(false);
-  const [battling, setBattling] = useState(false);
+  const [selected1, setSelected1] = useState<City>(CITIES[0]);
+  const [selected2, setSelected2] = useState<City>(CITIES[1]);
+  const [w1, setW1] = useState<CityWeather | null>(null);
+  const [w2, setW2] = useState<CityWeather | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [allData, setAllData] = useState<CityWeather[]>([]);
 
-  const handleSelectA = async (city: { name: string; country: string; lat: number; lng: number }) => {
+  const loadAll = async () => {
     setLoading(true);
-    const [w, p] = await Promise.all([fetchWeather(city.lat, city.lng), fetchPM25(city.lat, city.lng)]);
-    setCityA({ name: city.name, country: city.country, weather: w, pm25: p });
+    const results = await Promise.all(CITIES.map(c => fetchCityWeather(c)));
+    setAllData(results.filter(Boolean) as CityWeather[]);
     setLoading(false);
   };
 
-  const handleSelectB = async (city: { name: string; country: string; lat: number; lng: number }) => {
+  const loadCompare = async () => {
     setLoading(true);
-    const [w, p] = await Promise.all([fetchWeather(city.lat, city.lng), fetchPM25(city.lat, city.lng)]);
-    setCityB({ name: city.name, country: city.country, weather: w, pm25: p });
+    const [a, b] = await Promise.all([fetchCityWeather(selected1), fetchCityWeather(selected2)]);
+    setW1(a);
+    setW2(b);
     setLoading(false);
   };
 
-  const startBattle = () => { setBattling(true); };
-  const reset = () => { setCityA(null); setCityB(null); setBattling(false); };
+  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadCompare(); }, [selected1, selected2]);
 
-  const scoreA = cityA ? getScore(cityA) : 0;
-  const scoreB = cityB ? getScore(cityB) : 0;
-  const winner = battling ? (scoreA > scoreB ? cityA : cityB) : null;
-
-  const StatBar = ({ label, a, b, unit, invert }: { label: string; a: number; b: number; unit: string; invert?: boolean }) => {
-    const max = Math.max(a, b) || 1;
-    const pctA = (a / max) * 100;
-    const pctB = (b / max) * 100;
-    const aWins = invert ? a < b : a > b;
-    return (
-      <div className="space-y-1">
-        <div className="flex justify-between text-[10px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}><span>{label}</span></div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1"><div className="h-2 rounded-full" style={{ background: 'var(--tile-bg)', border: '1px solid var(--tile-border)' }}><div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pctA}%`, background: aWins ? '#5CB85C' : '#D9534F' }} /></div></div>
-          <span className="w-12 text-right text-xs font-bold" style={{ color: 'var(--text)' }}>{a}{unit}</span>
-          <Swords className="h-3 w-3 shrink-0" style={{ color: 'var(--primary)' }} />
-          <span className="w-12 text-left text-xs font-bold" style={{ color: 'var(--text)' }}>{b}{unit}</span>
-          <div className="flex-1"><div className="h-2 rounded-full" style={{ background: 'var(--tile-bg)', border: '1px solid var(--tile-border)' }}><div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pctB}%`, background: !aWins ? '#5CB85C' : '#D9534F' }} /></div></div>
-        </div>
-      </div>
-    );
+  const score = (w: CityWeather) => {
+    let s = 0;
+    if (w.temp >= 25 && w.temp <= 32) s += 3;
+    else if (w.temp < 25) s += 2;
+    else s += 1;
+    if (w.humidity >= 40 && w.humidity <= 70) s += 2;
+    else s += 1;
+    if (w.wind <= 15) s += 2;
+    else s += 1;
+    if (w.weatherCode <= 3) s += 3;
+    else if (w.weatherCode <= 48) s += 2;
+    else s += 1;
+    if (w.uv <= 8) s += 2;
+    else s += 1;
+    return s;
   };
+
+  const winner = w1 && w2 ? (score(w1) >= score(w2) ? w1 : w2) : null;
+
+  const sorted = [...allData].sort((a, b) => score(b) - score(a));
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-4xl space-y-4">
       <div>
-        <Link to="/dashboard" className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-70" style={{ color: 'var(--text-secondary)' }}><ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard</Link>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>City Battle ⚔️</h1>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Pick two cities and watch them face off</p>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>City Battle</h1>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Compare real weather across Philippine cities</p>
       </div>
 
-      {/* City Selectors */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="tile">
-          <h3 className="text-xs font-bold uppercase mb-2" style={{ color: 'var(--primary)' }}>Challenger A</h3>
-          {cityA ? (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{cityA.weather ? wmoEmoji(cityA.weather.current.weatherCode) : '❓'}</span>
-              <div><p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{cityA.name}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{cityA.country}</p></div>
-              <button onClick={() => setCityA(null)} className="ml-auto text-[10px] text-red-400 hover:underline">Change</button>
-            </div>
-          ) : (
-            <CitySearch onSelect={handleSelectA} placeholder="Search City A..." />
-          )}
+      {/* Comparison */}
+      <div className="tile">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <select value={selected1.name} onChange={e => setSelected1(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-input mb-3 text-sm">
+              {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+            </select>
+            {w1 ? (
+              <div className="text-center">
+                <p className="text-3xl">{wmoEmoji(w1.weatherCode)}</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>{w1.temp}°C</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{wmoDescription(w1.weatherCode)}</p>
+              </div>
+            ) : <div className="skeleton h-20 w-full" />}
+          </div>
+          <div>
+            <select value={selected2.name} onChange={e => setSelected2(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-input mb-3 text-sm">
+              {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+            </select>
+            {w2 ? (
+              <div className="text-center">
+                <p className="text-3xl">{wmoEmoji(w2.weatherCode)}</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>{w2.temp}°C</p>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{wmoDescription(w2.weatherCode)}</p>
+              </div>
+            ) : <div className="skeleton h-20 w-full" />}
+          </div>
         </div>
-        <div className="tile">
-          <h3 className="text-xs font-bold uppercase mb-2" style={{ color: 'var(--primary)' }}>Challenger B</h3>
-          {cityB ? (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{cityB.weather ? wmoEmoji(cityB.weather.current.weatherCode) : '❓'}</span>
-              <div><p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{cityB.name}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{cityB.country}</p></div>
-              <button onClick={() => setCityB(null)} className="ml-auto text-[10px] text-red-400 hover:underline">Change</button>
+
+        {winner && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold" style={{ background: 'var(--accent)' }}>
+              <Trophy className="h-4 w-4" /> {winner.city.name} wins with score {score(winner)}!
             </div>
-          ) : (
-            <CitySearch onSelect={handleSelectB} placeholder="Search City B..." />
-          )}
-        </div>
+          </div>
+        )}
+
+        {w1 && w2 && (
+          <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+            <div className="flex items-center gap-2"><Wind className="h-4 w-4 text-blue-400" /><span>{w1.wind} vs {w2.wind} km/h</span></div>
+            <div className="flex items-center gap-2"><Droplets className="h-4 w-4 text-blue-400" /><span>{w1.humidity}% vs {w2.humidity}%</span></div>
+            <div className="flex items-center gap-2"><Sun className="h-4 w-4 text-yellow-400" /><span>UV {w1.uv} vs {w2.uv}</span></div>
+            <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-orange-400" /><span>Score {score(w1)} vs {score(w2)}</span></div>
+          </div>
+        )}
       </div>
 
-      {/* Battle Button */}
-      {cityA && cityB && !battling && (
-        <button onClick={startBattle} className="glass-btn w-full flex items-center justify-center gap-2 py-4 text-lg">
-          <Swords className="h-5 w-5" /> START BATTLE
-        </button>
-      )}
-      {battling && (
-        <button onClick={reset} className="w-full flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold uppercase tracking-wider" style={{ borderColor: 'var(--tile-border)', color: 'var(--text-secondary)' }}>
-          <RotateCcw className="h-4 w-4" /> Battle Again
-        </button>
-      )}
-
-      {/* Battle Results */}
-      {battling && cityA?.weather && cityB?.weather && (
-        <div className="space-y-4">
-          {/* Winner Banner */}
-          {winner && (
-            <div className="flex flex-col items-center rounded-xl border p-6 text-center" style={{ background: 'rgba(234,157,99,0.08)', borderColor: 'rgba(234,157,99,0.25)' }}>
-              <Crown className="mb-2 h-8 w-8" style={{ color: 'var(--primary)' }} />
-              <h2 className="text-xl font-extrabold" style={{ color: 'var(--primary)' }}>{winner.name} Wins!</h2>
-              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{winner.name} scored {winner === cityA ? scoreA : scoreB} vs {winner === cityA ? scoreB : scoreA}</p>
+      {/* Leaderboard */}
+      <div>
+        <h2 className="text-sm font-bold mb-2" style={{ color: 'var(--text)' }}>Philippine Weather Leaderboard</h2>
+        <div className="space-y-1.5">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => <div key={i} className="tile"><div className="skeleton h-10 w-full" /></div>)
+          ) : sorted.map((w, i) => (
+            <div key={w.city.name} className="tile flex items-center gap-3">
+              <div className={`w-6 text-center text-sm font-bold ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : ''}`} style={{ color: i > 2 ? 'var(--text-muted)' : undefined }}>#{i + 1}</div>
+              <MapPin className="h-4 w-4 shrink-0" style={{ color: 'var(--text-secondary)' }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{w.city.name}</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoDescription(w.weatherCode)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold" style={{ color: 'var(--primary)' }}>{w.temp}°</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{score(w)} pts</p>
+              </div>
             </div>
-          )}
-
-          {/* Stats */}
-          <div className="tile space-y-3">
-            <h3 className="tile-title">Battle Stats</h3>
-            <StatBar label="Temperature" a={cityA.weather.current.temperature} b={cityB.weather.current.temperature} unit="°C" />
-            <StatBar label="Humidity" a={cityA.weather.current.humidity} b={cityB.weather.current.humidity} unit="%" />
-            <StatBar label="Wind Speed" a={cityA.weather.current.windSpeed} b={cityB.weather.current.windSpeed} unit=" km/h" />
-            <StatBar label="UV Index" a={cityA.weather.current.uvIndex} b={cityB.weather.current.uvIndex} unit="" />
-            <StatBar label="PM2.5 (lower is better)" a={cityA.pm25 || 0} b={cityB.pm25 || 0} unit="" invert />
-          </div>
-
-          {/* Side by Side */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="tile text-center" style={{ border: winner === cityA ? '2px solid #5CB85C' : undefined }}>
-              <p className="text-3xl mb-1">{wmoEmoji(cityA.weather.current.weatherCode)}</p>
-              <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{cityA.weather.current.temperature}°C</p>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoLabel(cityA.weather.current.weatherCode)}</p>
-              {winner === cityA && <span className="mt-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold text-emerald-400" style={{ background: 'rgba(92,184,92,0.12)' }}><Trophy className="h-3 w-3" /> Winner</span>}
-            </div>
-            <div className="tile text-center" style={{ border: winner === cityB ? '2px solid #5CB85C' : undefined }}>
-              <p className="text-3xl mb-1">{wmoEmoji(cityB.weather.current.weatherCode)}</p>
-              <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{cityB.weather.current.temperature}°C</p>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoLabel(cityB.weather.current.weatherCode)}</p>
-              {winner === cityB && <span className="mt-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold text-emerald-400" style={{ background: 'rgba(92,184,92,0.12)' }}><Trophy className="h-3 w-3" /> Winner</span>}
-            </div>
-          </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

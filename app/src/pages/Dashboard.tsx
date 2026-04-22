@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History } from 'lucide-react';
-import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
+import { Thermometer, Droplets, Wind, RefreshCw, Shirt, Umbrella, HeartPulse, Clock, AlertTriangle, Share2, Sunrise, Sunset, History, Flame, Sprout, Sun } from 'lucide-react';
+import { fetchWeather, fetchPM25, fetchAirQuality, fetchSunriseSunset, fetchHistoricalWeather, fetchAQIForecast, fetchFireRisk, fetchUVData, wmoEmoji, wmoLabel, aqiColor, pm25Class } from '@/services/weatherApi';
 import { fetchNews } from '@/services/newsApi';
 import { Line } from 'react-chartjs-2';
 import LocationSelector from '@/components/LocationSelector';
@@ -37,38 +37,44 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
   const [aqiForecast, setAqiForecast] = useState<AQIForecast[]>([]);
   const [shared, setShared] = useState(false);
   const [alerts, setAlerts] = useState<Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }>>([]);
+  const [fireRisk, setFireRisk] = useState<{ risk: string; riskColor: string } | null>(null);
+  const [uvData, setUVData] = useState<{ uvMax: number; radiation: number } | null>(null);
 
   useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
 
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const [w, p, aq, n, ss, hist, aqiF] = await Promise.all([
-        fetchWeather(current.lat, current.lng),
-        fetchPM25(current.lat, current.lng),
-        fetchAirQuality(current.lat, current.lng),
-        fetchNews(),
-        fetchSunriseSunset(current.lat, current.lng),
-        fetchHistoricalWeather(current.lat, current.lng),
-        fetchAQIForecast(current.lat, current.lng),
+      // Fetch weather data independently so partial failures don't break everything
+      const w = await fetchWeather(current.lat, current.lng);
+      setWeather(w);
+      if (!w) { setError('Could not load weather data. Check your connection.'); setLoading(false); return; }
+
+      // Fetch secondary data in parallel
+      const [p, aq, n, ss, hist, aqiF, fr, uv] = await Promise.all([
+        fetchPM25(current.lat, current.lng).catch(() => null),
+        fetchAirQuality(current.lat, current.lng).catch(() => null),
+        fetchNews().catch(() => []),
+        fetchSunriseSunset(current.lat, current.lng).catch(() => null),
+        fetchHistoricalWeather(current.lat, current.lng).catch(() => null),
+        fetchAQIForecast(current.lat, current.lng).catch(() => []),
+        fetchFireRisk(current.lat, current.lng).catch(() => null),
+        fetchUVData(current.lat, current.lng).catch(() => null),
       ]);
-      setWeather(w); setPm25(p); setAirQuality(aq); setNews(n.slice(0, 4));
-      setSunriseSunset(ss); setHistorical(hist); setAqiForecast(aqiF);
+      setPm25(p); setAirQuality(aq); setNews((n as any).slice(0, 4));
+      setSunriseSunset(ss); setHistorical(hist); setAqiForecast(aqiF as any);
+      setFireRisk(fr); setUVData(uv);
       setLastUpdated(new Date());
 
       // Generate alerts based on current conditions
       const newAlerts: Array<{ id: string; title: string; desc: string; severity: 'low' | 'medium' | 'high' }> = [];
-      if (w) {
-        const cur = w.current;
-        if (cur.temperature > 35) newAlerts.push({ id: 'heat', title: 'Heat Warning', desc: `Temperature reaching ${cur.temperature}°C. Stay hydrated and avoid prolonged sun exposure.`, severity: 'high' });
-        if (cur.uvIndex > 8) newAlerts.push({ id: 'uv', title: 'High UV Alert', desc: `UV index at ${cur.uvIndex}. Apply SPF 50+ sunscreen and seek shade.`, severity: 'medium' });
-        if (cur.windSpeed > 50) newAlerts.push({ id: 'wind', title: 'Strong Winds', desc: `Wind speeds up to ${cur.windSpeed} km/h. Secure loose outdoor items.`, severity: 'high' });
-        if (p !== null && p > 55) newAlerts.push({ id: 'aqi', title: 'Poor Air Quality', desc: `PM2.5 at ${p}. Wear a mask if going outdoors.`, severity: 'medium' });
-        if (cur.precipitation > 10) newAlerts.push({ id: 'rain', title: 'Heavy Rain', desc: `Heavy precipitation expected. Carry an umbrella and watch for flooding.`, severity: 'medium' });
-      }
+      const cur = w.current;
+      if (cur.temperature > 35) newAlerts.push({ id: 'heat', title: 'Heat Warning', desc: `Temperature reaching ${cur.temperature}°C. Stay hydrated and avoid prolonged sun exposure.`, severity: 'high' });
+      if (cur.uvIndex > 8) newAlerts.push({ id: 'uv', title: 'High UV Alert', desc: `UV index at ${cur.uvIndex}. Apply SPF 50+ sunscreen and seek shade.`, severity: 'medium' });
+      if (cur.windSpeed > 50) newAlerts.push({ id: 'wind', title: 'Strong Winds', desc: `Wind speeds up to ${cur.windSpeed} km/h. Secure loose outdoor items.`, severity: 'high' });
+      if (p !== null && p > 55) newAlerts.push({ id: 'aqi', title: 'Poor Air Quality', desc: `PM2.5 at ${p}. Wear a mask if going outdoors.`, severity: 'medium' });
+      if (cur.precipitation > 10) newAlerts.push({ id: 'rain', title: 'Heavy Rain', desc: `Heavy precipitation expected. Carry an umbrella and watch for flooding.`, severity: 'medium' });
       setAlerts(newAlerts);
-
-      if (!w) setError('Could not load weather data. Check your connection.');
     } catch { setError('Failed to load data.'); }
     setLoading(false);
   };
@@ -237,6 +243,34 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
             <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>Visibility</span><span style={{ color: 'var(--text)' }}>{(cur.visibility / 1000).toFixed(1)} km</span></div>
             <div className="flex justify-between text-xs"><span style={{ color: 'var(--text-muted)' }}>Cloud Cover</span><span style={{ color: 'var(--text)' }}>{cur.cloudCover}%</span></div>
           </div>
+        </div>
+      </div>
+
+      {/* Environmental Quick Glance */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {fireRisk && (
+          <div className="tile text-center">
+            <Flame className="mx-auto mb-1 h-5 w-5" style={{ color: fireRisk.riskColor }} />
+            <p className="text-lg font-bold" style={{ color: fireRisk.riskColor }}>{fireRisk.risk}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Fire Risk</p>
+          </div>
+        )}
+        {uvData && (
+          <div className="tile text-center">
+            <Sun className="mx-auto mb-1 h-5 w-5 text-yellow-400" />
+            <p className="text-lg font-bold text-yellow-400">{uvData.uvMax}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>UV Max · {uvData.uvMax <= 2 ? 'Low' : uvData.uvMax <= 5 ? 'Mod' : uvData.uvMax <= 7 ? 'High' : 'Very High'}</p>
+          </div>
+        )}
+        <div className="tile text-center">
+          <Sprout className="mx-auto mb-1 h-5 w-5 text-emerald-400" />
+          <p className="text-lg font-bold text-emerald-400">{(cur.humidity + cur.temperature) / 2 > 35 ? 'Dry' : 'Normal'}</p>
+          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Soil Estimate</p>
+        </div>
+        <div className="tile text-center">
+          <Droplets className="mx-auto mb-1 h-5 w-5 text-blue-400" />
+          <p className="text-lg font-bold text-blue-400">{cur.precipitation > 0 ? `${cur.precipitation}mm` : 'None'}</p>
+          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Precipitation</p>
         </div>
       </div>
 

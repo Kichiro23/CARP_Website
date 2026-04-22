@@ -1,19 +1,48 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, BarChart3, Newspaper, MapPin, Sparkles, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Shield, BarChart3, MapPin, Sparkles, Sun, Moon, Droplets, Sprout, Flame, Users, Globe, Clock } from 'lucide-react';
 import CarpLogo from '@/components/CarpLogo';
 import Footer from '@/components/Footer';
 
 const features = [
-  { icon: Shield, title: 'Secure Access', desc: 'Protected authentication with Google OAuth and email login' },
-  { icon: BarChart3, title: 'Live Analytics', desc: 'Real-time weather data with interactive charts' },
-  { icon: MapPin, title: 'Global Map', desc: 'Interactive worldwide monitoring with AQI markers' },
-  { icon: Newspaper, title: 'Climate News', desc: 'Latest environmental research and updates' },
+  { icon: Globe, title: 'Global Environmental Data', desc: 'Real-time weather, air quality, water systems, soil health, and fire risk from Open-Meteo and global monitoring networks.' },
+  { icon: Shield, title: 'Air Quality Monitoring', desc: 'Track PM2.5, PM10, CO, NO₂, O₃, SO₂ with AQI classification, 24-hour forecasts, and health recommendations.' },
+  { icon: BarChart3, title: 'Analytics & Insights', desc: 'Interactive charts, historical trends, city comparisons, typhoon tracking, and AI-powered weather intelligence.' },
+  { icon: MapPin, title: 'Interactive Live Map', desc: 'Global map with AQI markers, precipitation radar, cloud cover overlays, and weather detail panels.' },
+  { icon: Droplets, title: 'Water & Marine Systems', desc: 'Sea surface temperature, wave height, and river discharge monitoring for aquatic environmental health.' },
+  { icon: Sprout, title: 'Soil & Agriculture', desc: 'Soil moisture and temperature with agricultural insights for crop management and drought assessment.' },
+  { icon: Flame, title: 'Wildfire Risk Assessment', desc: 'Fire risk calculator based on temperature, humidity, wind, and evapotranspiration data.' },
+  { icon: Users, title: 'Personal Tools', desc: 'Weather journal, ambient nature sounds, guided breathing, and embeddable weather widgets.' },
+];
+
+// World population estimate based on ~2.5 births/sec and ~1.0 deaths/sec
+// Reference: ~8.1 billion as of early 2024
+const POPULATION_BASE = 8_100_000_000;
+const POPULATION_REFERENCE_TIME = 1704067200000; // Jan 1, 2024
+const NET_GROWTH_PER_SECOND = 2.3;
+
+function getWorldPopulation(): number {
+  const elapsedSeconds = (Date.now() - POPULATION_REFERENCE_TIME) / 1000;
+  return Math.floor(POPULATION_BASE + elapsedSeconds * NET_GROWTH_PER_SECOND);
+}
+
+function formatPopulation(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
+const TIMEZONES = [
+  { label: 'Manila', zone: 'Asia/Manila' },
+  { label: 'UTC', zone: 'UTC' },
+  { label: 'New York', zone: 'America/New_York' },
+  { label: 'London', zone: 'Europe/London' },
+  { label: 'Tokyo', zone: 'Asia/Tokyo' },
 ];
 
 export default function Landing() {
   const [fade, setFade] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [population, setPopulation] = useState(getWorldPopulation());
+  const [clocks, setClocks] = useState<string[]>(TIMEZONES.map(() => ''));
 
   useEffect(() => {
     setTimeout(() => setFade(true), 100);
@@ -22,6 +51,16 @@ export default function Landing() {
     setTheme(initial);
     document.documentElement.setAttribute('data-theme', initial);
     document.documentElement.style.colorScheme = initial;
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPopulation(getWorldPopulation());
+      setClocks(TIMEZONES.map(tz => new Date().toLocaleTimeString('en-US', {
+        timeZone: tz.zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      })));
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleTheme = () => {
@@ -71,10 +110,10 @@ export default function Landing() {
         </button>
       </div>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8">
         <div className={`mx-auto max-w-md transition-all duration-1000 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           <div
-            className="p-8 text-center"
+            className="p-6 sm:p-8 text-center"
             style={{
               background: isLight ? '#ffffff' : 'rgba(20,20,30,0.5)',
               backdropFilter: isLight ? 'none' : 'blur(40px)',
@@ -83,14 +122,35 @@ export default function Landing() {
               boxShadow: isLight ? '0 4px 24px rgba(0,0,0,0.06)' : '0 8px 40px rgba(0,0,0,0.3)'
             }}
           >
-            <div className="mb-5 flex flex-col items-center gap-3">
-              <CarpLogo size={80} />
+            <div className="mb-4 flex flex-col items-center gap-3">
+              <CarpLogo size={72} />
               <div>
-                <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: isLight ? '#1a1a2e' : '#EAEFEF' }}>CARP</h1>
-                <p className="mt-1 text-sm tracking-wide" style={{ color: isLight ? '#5a5a6e' : '#9a9da8' }}>Climate & Air Research Platform</p>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: isLight ? '#1a1a2e' : '#EAEFEF' }}>CARP</h1>
+                <p className="mt-1 text-xs sm:text-sm tracking-wide" style={{ color: isLight ? '#5a5a6e' : '#9a9da8' }}>Climate & Air Research Platform</p>
               </div>
             </div>
-            <p className="mb-6 text-base font-medium" style={{ color: isLight ? '#4a4a5a' : '#C6CACA' }}>Smart Weather Insights for Better Decisions</p>
+
+            {/* World Population */}
+            <div className="mb-4 rounded-xl border p-3" style={{ borderColor: isLight ? '#e8e8ec' : 'rgba(255,255,255,0.08)', background: isLight ? '#f8f9fa' : 'rgba(255,255,255,0.03)' }}>
+              <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: '#EA9D63' }}>World Population</p>
+              <p className="text-lg sm:text-xl font-bold tabular-nums" style={{ color: isLight ? '#1a1a2e' : '#EAEFEF' }}>{formatPopulation(population)}</p>
+              <p className="text-[9px]" style={{ color: isLight ? '#8a8a9e' : '#6b6f7a' }}>Live estimate · ~2.3 people/sec</p>
+            </div>
+
+            {/* World Clocks */}
+            <div className="mb-4 grid grid-cols-5 gap-1">
+              {TIMEZONES.map((tz, i) => (
+                <div key={tz.label} className="text-center rounded-lg border p-1.5" style={{ borderColor: isLight ? '#e8e8ec' : 'rgba(255,255,255,0.06)', background: isLight ? '#f8f9fa' : 'rgba(255,255,255,0.02)' }}>
+                  <Clock className="mx-auto h-3 w-3 mb-0.5" style={{ color: '#EA9D63' }} />
+                  <p className="text-[9px] font-bold" style={{ color: isLight ? '#1a1a2e' : '#EAEFEF' }}>{clocks[i] || '--:--:--'}</p>
+                  <p className="text-[7px]" style={{ color: isLight ? '#8a8a9e' : '#6b6f7a' }}>{tz.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mb-5 text-sm sm:text-base font-medium" style={{ color: isLight ? '#4a4a5a' : '#C6CACA' }}>
+              Environmental data for a healthier planet. Monitor air, water, soil, and climate in real time.
+            </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link to="/login" className="glass-btn flex items-center justify-center gap-2 px-8 py-3.5">Login <ArrowRight className="h-4 w-4" /></Link>
               <Link
@@ -99,7 +159,7 @@ export default function Landing() {
                 style={{
                   color: '#EA9D63',
                   borderColor: 'rgba(234,157,99,0.3)',
-                  background: isLight ? 'transparent' : 'transparent'
+                  background: 'transparent'
                 }}
               >
                 Register
@@ -108,7 +168,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className={`mx-auto mt-10 grid max-w-4xl gap-4 transition-all delay-300 duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+        <div className={`mx-auto mt-8 grid max-w-5xl gap-3 transition-all delay-300 duration-1000 sm:grid-cols-2 lg:grid-cols-4 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           {features.map(f => (
             <div
               key={f.title}
@@ -129,10 +189,10 @@ export default function Landing() {
           ))}
         </div>
 
-        <div className={`mt-8 transition-all delay-500 duration-1000 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-          <div className="flex items-center justify-center gap-2 text-xs" style={{ color: isLight ? '#8a8a9e' : '#6b6f7a' }}>
-            <Sparkles className="h-3 w-3" style={{ color: '#EA9D63' }} />
-            <span>Complete Philippine city coverage &middot; Global weather monitoring &middot; AI-powered insights</span>
+        <div className={`mt-6 transition-all delay-500 duration-1000 ${fade ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+          <div className="flex items-center justify-center gap-2 text-xs text-center" style={{ color: isLight ? '#8a8a9e' : '#6b6f7a' }}>
+            <Sparkles className="h-3 w-3 shrink-0" style={{ color: '#EA9D63' }} />
+            <span>Atmospheric · Aquatic · Terrestrial · Risk Assessment</span>
           </div>
         </div>
       </div>

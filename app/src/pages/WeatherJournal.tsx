@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Plus, Trash2, CloudSun, Save, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { BookOpen, Plus, Trash2, CloudSun, Save, X, MapPin, Thermometer, Wind, Droplets, BarChart3 } from 'lucide-react';
+import { fetchWeather, wmoEmoji, wmoDescription } from '@/services/weatherApi';
 
 interface JournalEntry {
   id: string;
@@ -9,6 +9,9 @@ interface JournalEntry {
   mood: string;
   note: string;
   location: string;
+  temp: number;
+  wind: number;
+  humidity: number;
 }
 
 const STORAGE_KEY = 'carp_weather_journal';
@@ -28,8 +31,27 @@ export default function WeatherJournal() {
   const [mood, setMood] = useState('');
   const [note, setNote] = useState('');
   const [location, setLocation] = useState('');
+  const [realTemp, setRealTemp] = useState(0);
+  const [realWind, setRealWind] = useState(0);
+  const [realHumidity, setRealHumidity] = useState(0);
+  const [realCode, setRealCode] = useState(0);
 
   useEffect(() => { saveEntries(entries); }, [entries]);
+
+  const loadRealWeather = useCallback(async () => {
+    try {
+      const w = await fetchWeather(14.5995, 120.9842);
+      if (w) {
+        setRealTemp(w.current.temperature);
+        setRealWind(w.current.windSpeed);
+        setRealHumidity(w.current.humidity);
+        setRealCode(w.current.weatherCode);
+        if (!weather) setWeather(wmoDescription(w.current.weatherCode));
+      }
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { if (showForm) loadRealWeather(); }, [showForm, loadRealWeather]);
 
   const handleSave = () => {
     if (!note.trim()) return;
@@ -40,6 +62,9 @@ export default function WeatherJournal() {
       mood: mood || 'Neutral',
       note: note.trim(),
       location: location || 'Unknown',
+      temp: realTemp,
+      wind: realWind,
+      humidity: realHumidity,
     };
     setEntries(prev => [entry, ...prev]);
     setWeather(''); setMood(''); setNote(''); setLocation(''); setShowForm(false);
@@ -52,10 +77,13 @@ export default function WeatherJournal() {
   const moods = ['😊 Happy', '😢 Sad', '😴 Tired', '😰 Anxious', '🤩 Excited', '😌 Calm'];
   const weathers = ['☀️ Sunny', '☁️ Cloudy', '🌧️ Rainy', '⛈️ Stormy', '🌫️ Foggy', '❄️ Cold'];
 
+  const moodCounts: Record<string, number> = {};
+  entries.forEach(e => { moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1; });
+  const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <div>
-        <Link to="/dashboard" className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-70" style={{ color: 'var(--text-secondary)' }}><ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard</Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Weather Journal 📓</h1>
@@ -67,9 +95,42 @@ export default function WeatherJournal() {
         </div>
       </div>
 
+      {/* Stats */}
+      {entries.length > 0 && (
+        <div className="grid-tiles-3">
+          <div className="tile text-center">
+            <BookOpen className="mx-auto mb-1 h-5 w-5" style={{ color: 'var(--primary)' }} />
+            <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{entries.length}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Total Entries</p>
+          </div>
+          <div className="tile text-center">
+            <BarChart3 className="mx-auto mb-1 h-5 w-5 text-purple-400" />
+            <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{topMood}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Top Mood</p>
+          </div>
+          <div className="tile text-center">
+            <Thermometer className="mx-auto mb-1 h-5 w-5 text-red-400" />
+            <p className="text-lg font-bold" style={{ color: 'var(--text)' }}>{(entries.reduce((a, e) => a + e.temp, 0) / entries.length).toFixed(1)}°</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Avg Temp Logged</p>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div className="tile space-y-3">
           <h3 className="text-xs font-bold uppercase" style={{ color: 'var(--primary)' }}>New Entry</h3>
+          {/* Live weather */}
+          <div className="rounded-xl border p-3 flex items-center gap-3" style={{ borderColor: 'var(--tile-border)', background: 'rgba(255,255,255,0.02)' }}>
+            <span className="text-2xl">{wmoEmoji(realCode)}</span>
+            <div className="flex-1">
+              <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>Current Weather — {wmoDescription(realCode)}</p>
+              <div className="flex gap-3 mt-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                <span className="flex items-center gap-1"><Thermometer className="h-3 w-3" />{realTemp}°C</span>
+                <span className="flex items-center gap-1"><Wind className="h-3 w-3" />{realWind} km/h</span>
+                <span className="flex items-center gap-1"><Droplets className="h-3 w-3" />{realHumidity}%</span>
+              </div>
+            </div>
+          </div>
           <div>
             <label className="mb-1 block text-[10px] font-semibold uppercase" style={{ color: 'var(--text-secondary)' }}>Location</label>
             <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Where are you?" className="glass-input" />
@@ -114,13 +175,20 @@ export default function WeatherJournal() {
                 <div className="flex items-center gap-2 mb-1">
                   <CloudSun className="h-3.5 w-3.5" style={{ color: 'var(--primary)' }} />
                   <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--primary)' }}>{e.date}</span>
-                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>• {e.location}</span>
+                  <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-muted)' }}><MapPin className="h-3 w-3" />{e.location}</span>
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{e.weather}</span>
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{e.mood}</span>
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: 'var(--text)' }}>{e.note}</p>
+                {e.temp > 0 && (
+                  <div className="flex gap-3 mt-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    <span>{e.temp}°C</span>
+                    <span>{e.wind} km/h</span>
+                    <span>{e.humidity}%</span>
+                  </div>
+                )}
               </div>
               <button onClick={() => handleDelete(e.id)} className="rounded p-1 text-red-400 hover:bg-red-500/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
             </div>

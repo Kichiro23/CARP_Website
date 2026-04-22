@@ -1,13 +1,28 @@
-# CARP - Climate & Air Research Platform
+# CARP — Climate & Air Research Platform
 
 ![CARP Logo](app/public/logo.png)
 
-**CARP** is a comprehensive climate and air quality monitoring web application that provides real-time weather data, air quality index tracking, interactive global mapping, AI-powered assistance, and climate news for cities worldwide.
+**CARP** is a comprehensive environmental data platform that monitors, analyzes, and visualizes the state of our environment — from atmospheric conditions and air quality to water systems, soil health, and fire risk. It transforms raw environmental measurements into actionable insights for individuals, communities, and researchers.
 
-Developed by **BSCPE 3C Students** as a capstone project.
+Developed by **BSCpE 3C Students** at **Bulacan State University** as a capstone project for the Academic Year **2025-2026**.
 
 **Live Site:**
 - 🌐 **Production:** https://weathercarp.com
+- 📦 **GitHub Pages:** https://Kichiro23.github.io/CARP_Website
+
+---
+
+## What is CARP?
+
+**CARP** stands for **Climate & Air Research Platform**.
+
+CARP was built to democratize access to environmental data. We believe that understanding our environment — its air, water, soil, and climate — is the first step toward protecting it. By aggregating data from global monitoring networks, satellite observations, and meteorological models, CARP empowers users to make informed decisions about their health, safety, and impact on the planet.
+
+The platform spans four environmental domains:
+- 🌬️ **Atmospheric** — Weather, air quality, UV radiation, and climate trends
+- 💧 **Aquatic** — Sea surface temperature, wave height, and river discharge
+- 🌱 **Terrestrial** — Soil moisture, soil temperature, and agricultural insights
+- 🔥 **Risk Assessment** — Wildfire risk calculation based on environmental factors
 
 ---
 
@@ -17,54 +32,82 @@ Developed by **BSCPE 3C Students** as a capstone project.
 - [User Manual](#user-manual)
 - [Tech Stack](#tech-stack)
 - [Developers](#developers)
+- [Data Sources](#data-sources)
 
 ---
 
 ## Features
 
-### Weather & Climate Monitoring
-- **Real-time weather data** – temperature, humidity, wind speed, UV index, precipitation, visibility
-- **Air Quality Index (AQI)** – PM2.5 monitoring with health recommendations
-- **7-day weather forecasts** – daily and hourly breakdowns
-- **Interactive weather charts** – visual analytics using Chart.js
-- **City comparison tool** – side-by-side weather metrics for multiple cities
-- **Weather alerts** – custom notifications for weather conditions
+### 🌦️ Weather & Climate Monitoring
+- **Real-time weather data** — temperature, humidity, wind speed & direction, UV index, precipitation, visibility, cloud cover, surface pressure
+- **7-day weather forecasts** — daily and hourly breakdowns with emoji-coded weather conditions
+- **48-hour temperature & precipitation trends** — interactive charts
+- **Sunrise & sunset tracking** — day length calculation
+- **This Day Last Year** — historical weather comparison
+- **Weather sharing** — copy current conditions to clipboard
 
-### Global Coverage
-- **60+ preloaded cities** across 6 continents
-- **20+ Philippine cities** including Manila, Quezon City, Cebu, Davao, Baguio, Bulacan, Pampanga, and more
-- **City search** – search and add any city globally using Open-Meteo geocoding
-- **Searched cities persistence** – your searched cities are saved to localStorage
-- **Interactive world map** – color-coded markers by PM2.5 AQI level with live weather popups
-- **Auto-geolocation** – detects your current location on load
+### 🛡️ Air Quality Monitoring
+- **6 pollutant tracking** — PM2.5, PM10, CO, NO₂, O₃, SO₂
+- **AQI classification** — Good to Hazardous with color-coded indicators
+- **24-hour PM2.5 forecast chart** — predictive air quality trends
+- **Health recommendations** — tailored advice based on current AQI levels
 
-### AI-Powered Chat Assistant
-- **CARP AI** – floating chatbot powered by Google Gemini 2.0 Flash API
-- **Offline fallback** – rule-based responses when API quota is exceeded or connection fails
-- **Smart topic detection** – weather, AQI, map features, account help, team info, and more
-- **Available on every page** – bottom-right floating widget
+### 🗺️ Interactive Live Map
+- **60+ preloaded cities** across 6 continents with 20+ Philippine cities
+- **PM2.5 color-coded markers** — green (Good) to purple (Hazardous)
+- **Precipitation radar overlay** — real-time rain tracking via Open-Meteo tiles
+- **Cloud cover overlay** — satellite-style cloud layer
+- **Weather detail panel** — click any marker for full weather + 3-day mini forecast
+- **Custom city search** — add any city globally with localStorage persistence
+- **Auto-geolocation** — center map on your current location
 
-### Data & Insights
-- **Real-time climate news** – latest environmental news feeds
-- **Country information** – flags, demographics, capitals, and geographic data
-- **Weather analytics** – trend analysis and pattern recognition
-- **Historical trends** – long-term weather pattern visualization
+### 🌍 Environmental Monitoring (New)
+- **Water & Marine Systems** — sea surface temperature, wave height, river discharge
+- **Soil & Agriculture** — soil moisture (0-1cm) and soil temperature (0-7cm) with crop recommendations
+- **UV & Solar Radiation** — 7-day UV index forecast with SPF protection guide
+- **Wildfire Risk Assessment** — fire risk calculator based on temperature, humidity, wind, and evapotranspiration
 
-### User Account System
-- **Email/password registration** – secure account creation with validation
-- **Google Sign-In** – one-click OAuth authentication
-- **User profiles** – customizable settings and saved locations
-- **Password management** – secure change password + email-based forgot password reset
-- **Session management** – automatic logout, 401 handling, and token refresh
-- **Saved locations** – add/remove favorite cities, set a default location
+### 🔬 Analytics & Insights
+- **Analytics Hub** — Overview, Trends, and Alerts in one place
+  - Overview: 7-day temp range bar charts, weather condition doughnut charts
+  - Trends: 48-hour & 14-day outlook charts, temperature stats, rain probability bars
+  - Alerts: auto-generated heat, UV, wind, rain, fog, and humidity alerts with severity levels
+- **City Comparison** — side-by-side weather metrics for any two cities
+- **City Battle** — Philippine city weather competition with comfort scoring
+- **Time Machine** — historical weather lookup from 1940 to present
+- **Heatmap Calendar** — year-long temperature heatmap with stats
+- **Holiday Forecast** — real weather forecasts for upcoming Philippine holidays
+- **Typhoon Tracker** — wind & pressure monitoring with interactive Leaflet maps
 
-### Design & UX
-- **Cloud video background** – dynamic animated backdrop on landing page
-- **Glassmorphism design** – modern frosted-glass UI elements
-- **Dark & light mode** – full theme system with CSS variables and localStorage persistence
-- **Fully responsive** – mobile, tablet, and desktop optimized
-- **Smooth animations** – page transitions and micro-interactions
-- **Debounced search** – 350ms debounce on city search for performance
+### 🤖 AI-Powered Chat Assistant
+- **CARP AI** — floating chatbot powered by Google Gemini 2.0 Flash API
+- **Offline fallback** — rule-based responses when API quota is exceeded
+- **Smart topic detection** — weather, AQI, environmental data, account help, team info
+- **Available on every page** — bottom-right floating widget
+
+### 📓 Personal Tools
+- **Weather Journal** — personal environmental diary with auto-filled weather data, mood tracking, and statistical insights
+- **Zen Mode** — 5 ambient nature sounds (rain, ocean, forest, fire, wind) with guided breathing exercises
+- **Ambient Soundscape** — global sound controls in the navbar for background nature sounds
+
+### 📰 Climate News & Data
+- **Real-time climate news** — latest environmental articles from The Guardian and BBC
+- **Country Explorer** — flags, capitals, populations, and geographic data for all nations
+- **Widget** — embeddable weather card with query parameters for external sites
+
+### 🎨 Design & UX
+- **Cloud video background** — dynamic animated backdrop on landing page (theme-aware)
+- **Glassmorphism design** — modern frosted-glass UI elements
+- **Dark & light mode** — full theme system with CSS variables and localStorage persistence
+- **Fully responsive** — mobile, tablet, and desktop optimized
+- **Smooth animations** — page transitions and micro-interactions
+
+### 🔐 User Account System
+- **Email/password registration** — secure account creation with validation
+- **Google Sign-In** — one-click OAuth authentication
+- **User profiles** — customizable settings and saved locations
+- **Password management** — secure change password + email-based forgot password reset
+- **Saved locations** — add/remove favorite cities, set a default location
 
 ---
 
@@ -93,83 +136,82 @@ After logging in, you will see the **Dashboard** with:
 | Section | Description |
 |---------|-------------|
 | **Current Weather** | Live weather for your selected location |
-| **7-Day Forecast** | Scrollable daily weather predictions |
-| **Hourly Forecast** | Hour-by-hour breakdown for today |
-| **Air Quality** | AQI reading with health recommendations |
-| **Weather Charts** | Interactive temperature and humidity graphs |
+| **Severe Weather Alerts** | Auto-generated alerts for extreme conditions |
+| **7-Day Forecast** | Scrollable daily weather predictions with emoji icons |
+| **Sun & Moon** | Sunrise, sunset, and daylight duration |
+| **This Day Last Year** | Historical weather comparison |
+| **PM2.5 Forecast (24h)** | Predictive air quality chart |
+| **Air Quality Index** | Color-coded AQI with pollutant breakdown |
+| **AI Recommendations** | Smart clothing, travel, and health advice |
+| **Temperature & Precipitation Charts** | 24-hour interactive charts |
+| **Climate News** | Latest environmental articles |
+
+### Navigation Menu
+
+| Page | Description |
+|------|-------------|
+| **Dashboard** | Main hub with weather, AQI, forecasts, and news |
+| **Live Map** | Interactive map with AQI markers, radar, and cloud overlays |
+| **Explore** | Countries directory, city comparison, and Philippine city battle |
+| **Analytics** | Overview charts, 14-day trends, and weather alerts |
+| **Tools** | Time Machine, Heatmap Calendar, Holiday Forecast, Typhoon Tracker |
+| **Environment** | Water/marine, soil, UV/solar, and wildfire risk data |
+| **Journal** | Personal weather diary and Zen Mode with ambient sounds |
+| **Air Quality** | Detailed pollutant monitoring and health recommendations |
+| **News** | Latest climate and environmental articles |
+| **About** | Platform information, team, features, and data sources |
 
 ### Main Features
 
 #### Live Map
 - Click **"Live Map"** in the navigation bar
-- Explore 60+ default cities with interactive markers
-- **Search any city** using the search bar – type a city name and select from dropdown
-- Click any marker to see live weather + PM2.5 data
-- Markers are **color-coded by AQI level** (green = good, red = hazardous)
-- Your searched cities are saved automatically and persist across sessions
-- Click the **×** on a popup to remove a searched city
+- Explore 60+ default cities with interactive AQI markers
+- **Toggle overlays** — Precipitation Radar and Cloud Cover layers
+- **Search any city** using the search bar
+- **Click any marker** to open the detail panel with full weather + 3-day forecast
+- **Locate Me** button centers the map on your current GPS position
+
+#### Environment
+- Visit **"Environment"** for specialized environmental data
+- **Water & Marine** — check sea surface temperature, wave height, and river discharge
+- **Soil & Agriculture** — view soil moisture and temperature with crop recommendations
+- **UV & Solar** — see 7-day UV forecasts and SPF protection advice
+- **Fire Risk** — assess wildfire risk based on real environmental factors
 
 #### Compare Cities
-- Go to **"Compare"** page
-- Select two or more cities
-- View side-by-side weather metrics
+- Go to **"Explore"** → **"Compare"** tab
+- Enter two city names and view side-by-side weather metrics
+- See 7-day forecast comparison and winner summary
 
-#### Analytics
-- Visit **"Analytics"** for detailed charts
-- View temperature trends over time
-- Analyze humidity and precipitation patterns
-
-#### Trends
-- Go to **"Trends"** for historical weather pattern analysis
-- View long-term climate data visualizations
-
-#### Alerts
-- Visit **"Alerts"** to set custom weather notifications
-- Configure conditions for temperature, rain, or AQI thresholds
-
-#### News
-- Check **"News"** for latest climate articles
-- Read environmental updates from trusted sources
-
-#### Countries
-- Browse **"Countries"** for global data
-- View flags, capitals, populations, and geographic information
+#### Time Machine
+- Go to **"Tools"** → **"Time Machine"** tab
+- Select any date from 1940 to present
+- View historical weather with fun facts
 
 #### CARP AI Chatbot
-- Look for the **orange message icon** in the bottom-right corner of any page
-- Click it to open the chat panel
-- Ask about weather, air quality, how to use CARP, or the team
-- If the AI is busy (API limit), it switches to offline mode with instant rule-based answers
+- Look for the **orange message icon** in the bottom-right corner
+- Ask about weather, air quality, environmental data, or how to use CARP
+- If the AI is busy, it switches to offline mode with rule-based answers
 
 ### Account Management
 
 #### Profile Settings
-- Click your **avatar** in the top right
-- Select **"Profile"** to view your information
-- Update your name or email as needed
-- Manage your saved locations (add, remove, set default)
+- Click your **avatar** in the top right → **"Profile"**
+- Update your name or manage saved locations
 
 #### Settings
 - Go to **"Settings"** from the profile menu
-- Toggle between **Dark Mode** and **Light Mode**
-- Switch temperature units (°C / °F)
-- Clear local cache
+- Toggle **Dark Mode / Light Mode**
+- Enable/disable ambient soundscape
 
 #### Change Password
 - Go to **"Security"** from the profile menu
-- Enter your current password
-- Set a new password (minimum 6 characters)
-
-#### Forgot Password
-- On the login page, click **"Forgot Password?"**
-- Enter your registered email
-- Check your inbox for a reset link
-- Set a new password
+- Enter current and new password
 
 #### Log Out
 - Click your **avatar** → **"Log Out"**
-- You will be redirected to the login page
 
+---
 
 ## Tech Stack
 
@@ -178,8 +220,8 @@ After logging in, you will see the **Dashboard** with:
 - Vite (Build Tool)
 - Tailwind CSS (Styling)
 - React Router (Navigation)
-- Chart.js (Data Visualization)
-- React-Leaflet (Maps)
+- Chart.js + react-chartjs-2 (Data Visualization)
+- React-Leaflet + Leaflet (Maps)
 - Lucide React (Icons)
 
 ### Backend
@@ -191,30 +233,50 @@ After logging in, you will see the **Dashboard** with:
 - Nodemailer (Password Reset Emails)
 
 ### External APIs
-- Open-Meteo (Weather Data)
-- Open-Meteo Air Quality (AQI / PM2.5 Data)
-- Open-Meteo Geocoding (City Search)
-- REST Countries (Country Information)
-- Google Gemini 2.0 Flash (AI Chatbot)
+| API | Purpose |
+|-----|---------|
+| Open-Meteo Forecast | Weather data, forecasts, historical data |
+| Open-Meteo Air Quality | PM2.5, PM10, CO, NO₂, O₃, SO₂ monitoring |
+| Open-Meteo Marine | Sea surface temperature, wave height |
+| Open-Meteo Flood | River discharge data |
+| Open-Meteo Geocoding | City search and reverse geocoding |
+| REST Countries | Country demographics and flags |
+| The Guardian / BBC RSS | Climate news feeds |
+| Google Gemini 2.0 Flash | AI chatbot |
+
+---
 
 ## Developers
 
-Developed by **BSCPE 3C Students**
+Developed by **BSCpE 3C Students**
 
-Academic Year **2025-2026**
+**Bulacan State University** · Academic Year **2025-2026**
 
 | Name | Role |
 |------|------|
-| Rommel Andrei L. De Leon | Developer |
-| Raiza Charine H. Galang | Developer |
-| Cristina Angela G. Sedigo | Developer |
-| John Mareign B. Punzalan | Developer |
-| Rowella L. Lazaro | Developer |
+| Rommel Andrei L. De Leon | Lead Developer & System Architect |
+| Raiza Charine H. Galang | Frontend Developer & UI/UX Designer |
+| Cristina Angela G. Sedigo | Backend Developer & Database Engineer |
+| John Mareign B. Punzalan | Data Integration Specialist |
+| Rowella L. Lazaro | Quality Assurance & Documentation |
+
+---
+
+## Data Sources
+
+CARP aggregates environmental data from multiple authoritative sources:
+
+- **Open-Meteo** — Global weather forecasts, historical reanalysis, air quality, marine, flood, and soil data
+- **Open-Meteo Air Quality** — Real-time pollutant concentrations from CAMS (Copernicus Atmosphere Monitoring Service)
+- **Open-Meteo Marine** — Sea surface temperature and wave data from ERA5 and satellite observations
+- **Open-Meteo Flood** — River discharge from GloFAS (Global Flood Awareness System)
+- **REST Countries** — Country information and geographic data
+- **The Guardian & BBC** — Environmental journalism and climate reporting
 
 ---
 
 ## Acknowledgments
 
-This project was created for academic purposes as part of the Bachelor of Science in Computer Engineering program.
+This project was created for academic purposes as part of the Bachelor of Science in Computer Engineering program at Bulacan State University.
 
-**2025-2026**
+**CARP — Climate & Air Research Platform · 2025-2026**

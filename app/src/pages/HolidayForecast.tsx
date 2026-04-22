@@ -1,94 +1,142 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, PartyPopper, MapPin } from 'lucide-react';
-import { fetchWeather, wmoEmoji } from '@/services/weatherApi';
+import { Calendar, MapPin, Thermometer, Wind, Sun, CloudRain } from 'lucide-react';
+import { wmoEmoji, wmoDescription } from '@/services/weatherApi';
 
-interface PhHoliday {
+interface Holiday {
   name: string;
   date: string;
-  type: 'regular' | 'special';
-  description: string;
+  type: 'Regular' | 'Special' | 'Observance';
 }
 
-const HOLIDAYS: PhHoliday[] = [
-  { name: "New Year's Day", date: '2026-01-01', type: 'regular', description: 'Start the year fresh!' },
-  { name: 'Chinese New Year', date: '2026-02-17', type: 'special', description: 'Year of the Horse celebrations' },
-  { name: 'EDSA People Power', date: '2026-02-25', type: 'special', description: 'Commemorating democracy' },
-  { name: 'Maundy Thursday', date: '2026-04-02', type: 'regular', description: 'Holy Week begins' },
-  { name: 'Good Friday', date: '2026-04-03', type: 'regular', description: ' solemn reflection' },
-  { name: 'Black Saturday', date: '2026-04-04', type: 'special', description: 'Day of mourning' },
-  { name: 'Araw ng Kagitingan', date: '2026-04-09', type: 'regular', description: 'Day of Valor' },
-  { name: 'Labor Day', date: '2026-05-01', type: 'regular', description: 'Workers unite!' },
-  { name: 'Independence Day', date: '2026-06-12', type: 'regular', description: 'Philippine Independence' },
-  { name: 'Ninoy Aquino Day', date: '2026-08-21', type: 'special', description: 'Remembering a hero' },
-  { name: 'National Heroes Day', date: '2026-08-31', type: 'regular', description: 'Honoring all heroes' },
-  { name: 'All Saints Day', date: '2026-11-01', type: 'special', description: 'Visit loved ones' },
-  { name: 'Bonifacio Day', date: '2026-11-30', type: 'regular', description: 'Remembering Andres Bonifacio' },
-  { name: 'Christmas Day', date: '2026-12-25', type: 'regular', description: 'Merry Christmas!' },
-  { name: 'Rizal Day', date: '2026-12-30', type: 'regular', description: 'Dr. Jose Rizal commemoration' },
-  { name: "New Year's Eve", date: '2026-12-31', type: 'special', description: 'Welcome 2027!' },
-];
+interface HolidayWeather {
+  holiday: Holiday;
+  temp: number;
+  weatherCode: number;
+  wind: number;
+}
+
+function getPHHolidays(year: number): Holiday[] {
+  const holidays: Holiday[] = [
+    { name: "New Year's Day", date: `${year}-01-01`, type: 'Regular' },
+    { name: 'Araw ng Kagitingan', date: `${year}-04-09`, type: 'Regular' },
+    { name: 'Maundy Thursday', date: `${year}-04-17`, type: 'Regular' },
+    { name: 'Good Friday', date: `${year}-04-18`, type: 'Regular' },
+    { name: 'Labor Day', date: `${year}-05-01`, type: 'Regular' },
+    { name: 'Independence Day', date: `${year}-06-12`, type: 'Regular' },
+    { name: 'National Heroes Day', date: `${year}-08-25`, type: 'Regular' },
+    { name: 'Bonifacio Day', date: `${year}-11-30`, type: 'Regular' },
+    { name: 'Christmas Day', date: `${year}-12-25`, type: 'Regular' },
+    { name: 'Rizal Day', date: `${year}-12-30`, type: 'Regular' },
+    { name: 'Chinese New Year', date: `${year}-01-29`, type: 'Special' },
+    { name: "Valentine's Day", date: `${year}-02-14`, type: 'Observance' },
+    { name: 'Holy Saturday', date: `${year}-04-19`, type: 'Special' },
+    { name: 'Ninoy Aquino Day', date: `${year}-08-21`, type: 'Special' },
+    { name: 'All Saints Day', date: `${year}-11-01`, type: 'Special' },
+    { name: 'Christmas Eve', date: `${year}-12-24`, type: 'Special' },
+    { name: "New Year's Eve", date: `${year}-12-31`, type: 'Special' },
+    { name: 'Undas', date: `${year}-11-02`, type: 'Observance' },
+    { name: 'Pasko ng Pagkabuhay', date: `${year}-04-20`, type: 'Observance' },
+  ];
+  return holidays.filter(h => new Date(h.date + 'T00:00:00') >= new Date());
+}
+
+async function fetchHolidayWeather(date: string): Promise<{ temp: number; weatherCode: number; wind: number } | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=14.5995&longitude=120.9842&start_date=${date}&end_date=${date}&daily=temperature_2m_max,weather_code&hourly=windspeed_10m&timezone=auto`;
+    const res = await fetch(url);
+    const json = await res.json();
+    return {
+      temp: json.daily?.temperature_2m_max?.[0] ?? 0,
+      weatherCode: json.daily?.weather_code?.[0] ?? 0,
+      wind: json.hourly?.windspeed_10m?.[12] ?? 0,
+    };
+  } catch { return null; }
+}
 
 export default function HolidayForecast() {
-  const [forecasts, setForecasts] = useState<Array<{ holiday: PhHoliday; temp: number; weatherCode: number }>>([]);
+  const [holidays, setHolidays] = useState<HolidayWeather[]>([]);
   const [loading, setLoading] = useState(true);
+  const [city] = useState('Manila');
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const results = [];
-      for (const h of HOLIDAYS.slice(0, 6)) {
-        const w = await fetchWeather(14.5995, 120.9842);
-        if (w && w.daily[0]) {
-          results.push({ holiday: h, temp: w.daily[0].maxTemp, weatherCode: w.daily[0].weatherCode });
-        }
-      }
-      setForecasts(results);
+      setLoading(true);
+      const upcoming = getPHHolidays(2026);
+      const results = await Promise.all(
+        upcoming.slice(0, 10).map(async h => {
+          const w = await fetchHolidayWeather(h.date);
+          if (cancelled) return null;
+          return { holiday: h, temp: w?.temp ?? 0, weatherCode: w?.weatherCode ?? 0, wind: w?.wind ?? 0 };
+        })
+      );
+      if (!cancelled) setHolidays(results.filter(Boolean) as HolidayWeather[]);
       setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, []);
 
   return (
-    <div className="mx-auto max-w-xl space-y-4">
+    <div className="mx-auto max-w-4xl space-y-4">
       <div>
-        <Link to="/dashboard" className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-70" style={{ color: 'var(--text-secondary)' }}><ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard</Link>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Holiday Forecast 🎉</h1>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Plan your Philippine holidays with weather in mind</p>
-      </div>
-
-      <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--text-muted)' }}>
-        <MapPin className="h-3 w-3" style={{ color: 'var(--primary)' }} />
-        <span>Forecasting for Manila, Philippines</span>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Holiday Forecast</h1>
+        <p className="text-xs flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}><MapPin className="h-3 w-3" /> {city}, Philippines — Real upcoming weather</p>
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1, 2, 3, 4, 5].map(i => <div key={i} className="tile"><div className="skeleton h-4 w-full" /></div>)}</div>
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="tile"><div className="skeleton h-16 w-full" /></div>)}
+        </div>
+      ) : holidays.length === 0 ? (
+        <div className="tile text-center py-8" style={{ color: 'var(--text-muted)' }}>
+          <Calendar className="mx-auto h-8 w-8 mb-2" />
+          <p className="text-sm">No upcoming holidays with forecast available.</p>
+        </div>
       ) : (
         <div className="space-y-2">
-          {HOLIDAYS.map((h, i) => {
-            const f = forecasts[i];
-            const isPast = new Date(h.date) < new Date();
-            return (
-              <div key={h.name} className="tile flex items-center gap-3 !p-3" style={{ opacity: isPast ? 0.6 : 1 }}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: h.type === 'regular' ? 'rgba(234,157,99,0.10)' : 'rgba(59,130,246,0.10)' }}>
-                  <PartyPopper className="h-5 w-5" style={{ color: h.type === 'regular' ? 'var(--primary)' : '#3b82f6' }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{h.name}</p>
-                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold ${h.type === 'regular' ? 'text-orange-400' : 'text-blue-400'}`} style={{ background: h.type === 'regular' ? 'rgba(234,157,99,0.10)' : 'rgba(59,130,246,0.10)' }}>{h.type === 'regular' ? 'Regular' : 'Special'}</span>
-                  </div>
-                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{new Date(h.date).toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{h.description}</p>
-                </div>
-                {f && (
-                  <div className="shrink-0 text-right">
-                    <span className="text-lg">{wmoEmoji(f.weatherCode)}</span>
-                    <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>{f.temp}°C</p>
-                  </div>
-                )}
+          {holidays.map(h => (
+            <div key={h.holiday.date} className="tile flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ background: 'var(--card)' }}>
+                <span className="text-lg">{wmoEmoji(h.weatherCode)}</span>
               </div>
-            );
-          })}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{h.holiday.name}</p>
+                <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                  <Calendar className="h-3 w-3" />{h.holiday.date} · <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium" style={{ background: h.holiday.type === 'Regular' ? 'var(--accent)' : h.holiday.type === 'Special' ? '#4f46e5' : '#059669', color: 'white' }}>{h.holiday.type}</span>
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold" style={{ color: 'var(--primary)' }}>{h.temp}°</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{wmoDescription(h.weatherCode)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats summary */}
+      {!loading && holidays.length > 0 && (
+        <div className="grid-tiles-4">
+          <div className="tile text-center">
+            <Sun className="mx-auto mb-1 h-5 w-5 text-yellow-400" />
+            <p className="text-lg font-bold text-yellow-400">{holidays.filter(h => h.weatherCode <= 3).length}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Sunny Holidays</p>
+          </div>
+          <div className="tile text-center">
+            <CloudRain className="mx-auto mb-1 h-5 w-5 text-blue-400" />
+            <p className="text-lg font-bold text-blue-400">{holidays.filter(h => h.weatherCode >= 61).length}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Rainy Holidays</p>
+          </div>
+          <div className="tile text-center">
+            <Thermometer className="mx-auto mb-1 h-5 w-5 text-red-400" />
+            <p className="text-lg font-bold text-red-400">{Math.round(holidays.reduce((a, h) => a + h.temp, 0) / holidays.length)}°</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Avg Holiday Temp</p>
+          </div>
+          <div className="tile text-center">
+            <Wind className="mx-auto mb-1 h-5 w-5 text-emerald-400" />
+            <p className="text-lg font-bold text-emerald-400">{Math.round(holidays.reduce((a, h) => a + h.wind, 0) / holidays.length)}</p>
+            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Avg Wind km/h</p>
+          </div>
         </div>
       )}
     </div>

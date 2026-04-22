@@ -1,32 +1,96 @@
-import { BarChart3, Shield, Globe, Newspaper, Zap } from 'lucide-react';
-import { TEAM } from '@/config/api';
+import { BarChart3, Shield, Globe, Newspaper, Droplets, Sprout, Sun, Flame, History, CalendarDays, CloudRain, BookOpen, Sparkles, Map, Brain, Leaf, Users } from 'lucide-react';
+
+
+const developers = [
+  { name: 'Rommel Andrei L. De Leon', role: 'Lead Developer & System Architect', initials: 'RD', bio: 'Full-stack developer specializing in React, Node.js, and environmental data visualization. Led the architecture and API integration for CARP.' },
+  { name: 'Raiza Charine H. Galang', role: 'Frontend Developer & UI/UX Designer', initials: 'RG', bio: 'React and TypeScript specialist focused on creating intuitive user interfaces. Designed the glassmorphism theme and responsive layouts.' },
+  { name: 'Cristina Angela G. Sedigo', role: 'Backend Developer & Database Engineer', initials: 'AS', bio: 'Node.js and MongoDB expert responsible for authentication, user management, and data persistence layers.' },
+  { name: 'John Mareign B. Punzalan', role: 'Data Integration Specialist', initials: 'JP', bio: 'API integration and data processing lead. Connected Open-Meteo, air quality, and geocoding services into a unified platform.' },
+  { name: 'Rowella L. Lazaro', role: 'Quality Assurance & Documentation', initials: 'RL', bio: 'Ensured platform reliability through testing, documentation, and user experience validation across all features.' },
+];
 
 const features = [
-  { icon: BarChart3, title: 'Live Weather Data', desc: 'Real-time weather metrics from Open-Meteo API including temperature, humidity, wind, UV index, and precipitation.' },
-  { icon: Shield, title: 'Air Quality Monitoring', desc: 'Track PM2.5, PM10, CO, NO2, O3, SO2 levels with AQI classification and health recommendations.' },
-  { icon: Globe, title: 'Global Coverage', desc: 'Weather data for any city worldwide with country-level insights and interactive maps.' },
-  { icon: Newspaper, title: 'Climate News', desc: 'Latest environmental news from The Guardian and BBC Science & Environment feeds.' },
-  { icon: Zap, title: 'AI Insights', desc: 'Smart clothing, travel, and health recommendations based on current weather conditions.' },
+  { icon: BarChart3, title: 'Real-Time Weather & Climate', desc: 'Live temperature, humidity, wind, UV index, precipitation, visibility, and cloud cover from Open-Meteo API with hourly and daily forecasts.' },
+  { icon: Shield, title: 'Air Quality Monitoring', desc: 'Track PM2.5, PM10, CO, NO2, O3, SO2 with AQI classification, 24-hour PM2.5 forecasts, and health recommendations.' },
+  { icon: Droplets, title: 'Water & Marine Systems', desc: 'Sea surface temperature, wave height, and river discharge monitoring for aquatic environmental health.' },
+  { icon: Sprout, title: 'Soil & Agriculture', desc: 'Soil moisture and temperature at multiple depths, with agricultural insights for crop management and drought assessment.' },
+  { icon: Sun, title: 'UV & Solar Radiation', desc: '7-day UV index forecasts with solar radiation data and SPF protection recommendations.' },
+  { icon: Flame, title: 'Wildfire Risk Assessment', desc: 'Fire risk calculator based on temperature, humidity, wind, and evapotranspiration with prevention guidelines.' },
+  { icon: Map, title: 'Interactive Live Map', desc: 'Global air quality stations with PM2.5 color-coded markers, precipitation radar, cloud cover overlays, and weather detail panels.' },
+  { icon: Globe, title: 'Global City Explorer', desc: '60+ preloaded cities across 6 continents, country profiles, city battle rankings, and side-by-side weather comparison.' },
+  { icon: History, title: 'Time Machine', desc: 'Historical weather lookup for any date from 1940 to present using Open-Meteo Archive API.' },
+  { icon: CalendarDays, title: 'Holiday Forecast', desc: 'Real weather forecasts for upcoming Philippine holidays with category badges and aggregated statistics.' },
+  { icon: CloudRain, title: 'Typhoon Tracker', desc: 'Real-time wind and pressure monitoring across Philippine regions with interactive Leaflet tracking maps.' },
+  { icon: BookOpen, title: 'Weather Journal', desc: 'Personal environmental diary with auto-filled weather data, mood tracking, and statistical insights.' },
+  { icon: Sparkles, title: 'Zen Mode', desc: 'Ambient nature sounds (rain, ocean, forest, fire, wind) with guided breathing exercises for relaxation.' },
+  { icon: Brain, title: 'AI Weather Intelligence', desc: 'Smart clothing, travel, and health recommendations based on current conditions and air quality.' },
+  { icon: Newspaper, title: 'Climate News Feed', desc: 'Latest environmental news from The Guardian and BBC Science & Environment feeds.' },
+  { icon: Leaf, title: 'Environmental Analytics', desc: '7-day temperature charts, precipitation trends, weather condition breakdowns, and automated weather alerts.' },
 ];
 
 export default function About() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-4">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>About CARP</h1>
-        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Climate & Air Research Platform</p>
-      </div>
-      <div className="tile mb-4">
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          <strong style={{ color: 'var(--text)' }}>CARP</strong> is a comprehensive climate and air quality monitoring platform developed by BSCpE 3C students for the academic year 2025-2026. It provides real-time weather analytics, air quality indices, and environmental insights powered by global meteorological data sources.
+    <div className="mx-auto max-w-3xl space-y-6">
+      {/* Hero */}
+      <div className="text-center py-6">
+        <img src="/logo.png" alt="CARP" className="h-16 w-16 mx-auto mb-4 object-contain" />
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>CARP</h1>
+        <p className="text-sm font-semibold mt-1" style={{ color: 'var(--primary)' }}>Climate & Air Research Platform</p>
+        <p className="text-xs mt-2 max-w-lg mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          A comprehensive environmental data platform that monitors, analyzes, and visualizes the state of our environment 
+          — from atmospheric conditions and air quality to water systems, soil health, and fire risk. 
+          CARP transforms raw environmental measurements into actionable insights for individuals, communities, and researchers.
         </p>
       </div>
-      <div className="mb-4">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>Features</h2>
+
+      {/* Mission */}
+      <div className="tile">
+        <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>Our Mission</h2>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          CARP was built to democratize access to environmental data. We believe that understanding our environment 
+          — its air, water, soil, and climate — is the first step toward protecting it. By aggregating data from 
+          global monitoring networks, satellite observations, and meteorological models, CARP empowers users to 
+          make informed decisions about their health, safety, and impact on the planet.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+          <span className="flex items-center gap-1"><Leaf className="h-3 w-3 text-emerald-400" /> Atmospheric Monitoring</span>
+          <span className="flex items-center gap-1"><Droplets className="h-3 w-3 text-blue-400" /> Aquatic Systems</span>
+          <span className="flex items-center gap-1"><Sprout className="h-3 w-3 text-green-400" /> Terrestrial Health</span>
+          <span className="flex items-center gap-1"><Sun className="h-3 w-3 text-yellow-400" /> Solar & UV Radiation</span>
+        </div>
+      </div>
+
+      {/* Developers */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--primary)' }}>
+          <Users className="h-4 w-4" /> Development Team
+        </h2>
+        <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
+          Developed by <strong>BSCpE 3C Students</strong> for the Academic Year 2025-2026 at <strong>Bulacan State University</strong>.
+        </p>
+        <div className="space-y-2">
+          {developers.map(d => (
+            <div key={d.name} className="tile flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #EA9D63, #d48952)' }}>
+                {d.initials}
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{d.name}</p>
+                <p className="text-[11px] font-medium" style={{ color: 'var(--primary)' }}>{d.role}</p>
+                <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{d.bio}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Features */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>Platform Features</h2>
         <div className="grid-tiles-2">
           {features.map(f => (
             <div key={f.title} className="tile">
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'rgba(234,157,99,0.10)' }}>
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'rgba(234,157,99,0.10)' }}>
                 <f.icon className="h-4 w-4" style={{ color: 'var(--primary)' }} />
               </div>
               <h3 className="mb-1 text-sm font-bold" style={{ color: 'var(--text)' }}>{f.title}</h3>
@@ -35,21 +99,30 @@ export default function About() {
           ))}
         </div>
       </div>
-      <div>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--primary)' }}>Development Team</h2>
-        <div className="grid-tiles-2">
-          {TEAM.map(m => (
-            <div key={m.name} className="tile flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #EA9D63, #d48952)' }}>
-                {m.initials}
-              </div>
-              <div>
-                <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{m.name}</p>
-                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{m.role}</p>
-              </div>
-            </div>
-          ))}
+
+      {/* Data Sources */}
+      <div className="tile">
+        <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--primary)' }}>Data Sources</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p><strong style={{ color: 'var(--text)' }}>Open-Meteo</strong> — Weather forecasts, historical data, air quality, soil, marine, and flood APIs</p>
+          <p><strong style={{ color: 'var(--text)' }}>Open-Meteo Air Quality</strong> — PM2.5, PM10, CO, NO₂, O₃, SO₂ pollutant monitoring</p>
+          <p><strong style={{ color: 'var(--text)' }}>Open-Meteo Marine</strong> — Sea surface temperature and wave height data</p>
+          <p><strong style={{ color: 'var(--text)' }}>Open-Meteo Flood</strong> — River discharge and hydrological data</p>
+          <p><strong style={{ color: 'var(--text)' }}>Open-Meteo Geocoding</strong> — Global city search and reverse geocoding</p>
+          <p><strong style={{ color: 'var(--text)' }}>REST Countries</strong> — Country demographics, flags, and geographic information</p>
+          <p><strong style={{ color: 'var(--text)' }}>The Guardian / BBC</strong> — Climate and environmental news feeds</p>
+          <p><strong style={{ color: 'var(--text)' }}>Google Gemini</strong> — AI-powered chat assistance</p>
         </div>
+      </div>
+
+      {/* Acknowledgments */}
+      <div className="text-center py-4">
+        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          CARP — Climate & Air Research Platform · BSCpE 3C · Academic Year 2025-2026 · Bulacan State University
+        </p>
+        <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+          Built with React 19, TypeScript, Vite, Tailwind CSS, Node.js, Express, and MongoDB.
+        </p>
       </div>
     </div>
   );

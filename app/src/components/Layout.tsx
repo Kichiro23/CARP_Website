@@ -2,11 +2,15 @@ import { Outlet, Navigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import VideoBackground from './VideoBackground';
+import { useWeatherCache } from '@/hooks/useWeatherCache';
 import type { User } from '@/types';
 import type { SavedLocation } from '@/hooks/useLocation';
 import type { Theme } from '@/types';
 
 export default function Layout({ user, logout, current, loading, theme, toggleTheme }: { user: User | null; logout: () => void; current: SavedLocation; loading: boolean; theme: Theme; toggleTheme: () => void }) {
+  // Preload weather cache in background for snappier navigation
+  useWeatherCache(current.lat, current.lng);
+
   if (loading) return (
     <div className="flex h-[100dvh] items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />

@@ -162,6 +162,8 @@ export function wmoEmoji(code: number): string {
   return map[code] || '\u{1F321}\u{FE0F}';
 }
 
+export function wmoDescription(code: number): string { return wmoLabel(code); }
+
 export function wmoLabel(code: number): string {
   const map: Record<number, string> = {
     0: 'Clear', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
@@ -236,4 +238,124 @@ export async function searchCitiesWeather(queries: string[]): Promise<Array<{ na
     }
   }
   return results;
+}
+
+// ==================== ENVIRONMENTAL DATA APIs ====================
+
+export interface MarineData {
+  seaSurfaceTemp: number | null;
+  waveHeight: number | null;
+}
+
+export async function fetchMarineData(lat: number, lon: number): Promise<MarineData | null> {
+  const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=sea_surface_temperature_max,wave_height_max&timezone=auto`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const daily = data.daily;
+  if (!daily) return null;
+  return {
+    seaSurfaceTemp: daily.sea_surface_temperature_max?.[0] ?? null,
+    waveHeight: daily.wave_height_max?.[0] ?? null,
+  };
+}
+
+export interface RiverData {
+  discharge: number | null;
+  date: string;
+}
+
+export async function fetchRiverDischarge(lat: number, lon: number): Promise<RiverData | null> {
+  const url = `https://flood-api.open-meteo.com/v1/flood?latitude=${lat}&longitude=${lon}&daily=river_discharge&timezone=auto`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const daily = data.daily;
+  if (!daily?.river_discharge?.[0]) return null;
+  return {
+    discharge: daily.river_discharge[0],
+    date: daily.time?.[0] ?? '',
+  };
+}
+
+export interface SoilData {
+  moisture: number | null;
+  temperature: number | null;
+}
+
+export async function fetchSoilData(lat: number, lon: number): Promise<SoilData | null> {
+  const url = `${BASE_URLS.OPENMETEO}/forecast?latitude=${lat}&longitude=${lon}&hourly=soil_moisture_0_to_1cm,soil_temperature_0_to_7cm&timezone=auto&forecast_days=1`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const hourly = data.hourly;
+  if (!hourly) return null;
+  return {
+    moisture: hourly.soil_moisture_0_to_1cm?.[0] ?? null,
+    temperature: hourly.soil_temperature_0_to_7cm?.[0] ?? null,
+  };
+}
+
+export interface UVData {
+  uvMax: number;
+  radiation: number;
+  dates: string[];
+  uvValues: number[];
+}
+
+export async function fetchUVData(lat: number, lon: number): Promise<UVData | null> {
+  const url = `${BASE_URLS.OPENMETEO}/forecast?latitude=${lat}&longitude=${lon}&daily=uv_index_max,shortwave_radiation_sum&timezone=auto&forecast_days=7`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const daily = data.daily;
+  if (!daily) return null;
+  return {
+    uvMax: daily.uv_index_max?.[0] ?? 0,
+    radiation: daily.shortwave_radiation_sum?.[0] ?? 0,
+    dates: daily.time?.map((t: string) => new Date(t).toLocaleDateString('en', { weekday: 'short' })) ?? [],
+    uvValues: daily.uv_index_max ?? [],
+  };
+}
+
+export interface FireRiskData {
+  risk: 'Low' | 'Moderate' | 'High' | 'Extreme';
+  riskColor: string;
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  droughtIndex: number;
+}
+
+export async function fetchFireRisk(lat: number, lon: number): Promise<FireRiskData | null> {
+  const url = `${BASE_URLS.OPENMETEO}/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&daily=et0_fao_evapotranspiration&timezone=auto&forecast_days=1`;
+  const res = await safeFetch(url);
+  if (!res) return null;
+  const data = await res.json();
+  const cur = data.current;
+  if (!cur) return null;
+  const temp = cur.temperature_2m ?? 0;
+  const humidity = cur.relative_humidity_2m ?? 0;
+  const wind = cur.wind_speed_10m ?? 0;
+  // Simple fire risk calculation based on Canadian FFMC-like logic
+  let score = 0;
+  if (temp > 30) score += 3;
+  else if (temp > 25) score += 2;
+  else if (temp > 20) score += 1;
+  if (humidity < 20) score += 3;
+  else if (humidity < 40) score += 2;
+  else if (humidity < 60) score += 1;
+  if (wind > 30) score += 2;
+  else if (wind > 15) score += 1;
+  const drought = data.daily?.et0_fao_evapotranspiration?.[0] ?? 0;
+  if (drought > 8) score += 2;
+  else if (drought > 5) score += 1;
+
+  let risk: FireRiskData['risk'] = 'Low';
+  let color = '#5CB85C';
+  if (score >= 8) { risk = 'Extreme'; color = '#9B59B6'; }
+  else if (score >= 6) { risk = 'High'; color = '#D9534F'; }
+  else if (score >= 4) { risk = 'Moderate'; color = '#F0AD4E'; }
+
+  return { risk, riskColor: color, temperature: temp, humidity, windSpeed: wind, droughtIndex: drought };
 }

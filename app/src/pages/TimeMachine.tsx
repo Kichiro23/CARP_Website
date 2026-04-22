@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, History, Sparkles } from 'lucide-react';
+import { Calendar, Clock, History, Sparkles } from 'lucide-react';
 import { fetchHistoricalWeather, wmoEmoji, wmoLabel } from '@/services/weatherApi';
 import type { HistoricalWeather } from '@/types';
 
@@ -52,7 +51,6 @@ export default function TimeMachine() {
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <div>
-        <Link to="/dashboard" className="mb-2 inline-flex items-center gap-1.5 text-xs font-medium hover:opacity-70" style={{ color: 'var(--text-secondary)' }}><ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard</Link>
         <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Weather Time Machine 🕰️</h1>
         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Travel back in time and see what the weather was like on any date</p>
       </div>
