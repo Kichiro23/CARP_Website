@@ -172,6 +172,8 @@ After logging in, you will see the **Dashboard** with:
 
 Developed by **BSCPE 3C Students**
 
+Academic Year **2025-2026**
+
 | Name | Role |
 |------|------|
 | Rommel De Leon | Lead Developer |
