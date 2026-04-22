@@ -21,16 +21,16 @@
   }
 
   [data-theme="light"] {
-    --bg: #f0f1f5;
-    --bg-secondary: #ffffff;
-    --text: #1e1e2e;
-    --text-secondary: #5a5a6e;
-    --text-muted: #8a8a9e;
-    --primary: #c9783e;
-    --accent: #4a6a7a;
-    --tile-bg: #ffffff;
-    --tile-border: #e2e4e9;
-    --border: #e2e4e9;
+    --bg: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --text: #1a1a2e;
+    --text-secondary: #555567;
+    --text-muted: #888899;
+    --primary: #d48952;
+    --accent: #5a7a8a;
+    --tile-bg: #f8f9fa;
+    --tile-border: #e8e8ec;
+    --border: #e8e8ec;
   }
 
   * {
@@ -62,11 +62,12 @@
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   }
   [data-theme="light"] .tile {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    border: 1px solid #e8e8ec;
+    box-shadow: none;
   }
   [data-theme="light"] .tile:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-    border-color: rgba(234,157,99,0.35);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-color: #d48952;
   }
 
   .glass-btn {
@@ -112,13 +113,13 @@
     box-shadow: 0 0 0 3px rgba(234,157,99,0.08);
   }
   [data-theme="light"] .glass-input {
-    background: #f8f9fb;
-    border-color: #e2e4e9;
+    background: #f5f6f8;
+    border-color: #e0e0e5;
   }
   [data-theme="light"] .glass-input:focus {
     background: #ffffff;
-    border-color: #c9783e;
-    box-shadow: 0 0 0 3px rgba(201,120,62,0.12);
+    border-color: #d48952;
+    box-shadow: 0 0 0 3px rgba(212,137,82,0.15);
   }
   .glass-input::placeholder {
     color: var(--text-muted);
@@ -150,7 +151,11 @@
     box-shadow: 0 8px 40px rgba(0,0,0,0.15);
   }
   [data-theme="light"] .glass-strong {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    background: #f8f9fa;
+    border: 1px solid #e8e8ec;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .glass-badge {
@@ -170,11 +175,12 @@
     filter: brightness(1.3);
   }
   [data-theme="light"] .glass-badge {
-    background: #f5f6f8;
-    border-color: #e2e4e9;
+    background: #f0f1f5;
+    border-color: #e8e8ec;
+    color: #555567;
   }
   [data-theme="light"] .glass-badge:hover {
-    background: #eef0f3;
+    background: #e8e9ed;
     filter: none;
   }
 
@@ -254,7 +260,7 @@
     border-radius: 8px;
   }
   [data-theme="light"] .skeleton {
-    background: linear-gradient(90deg, #f0f1f5 25%, #e2e4e9 50%, #f0f1f5 75%);
+    background: linear-gradient(90deg, #f0f1f5 25%, #e0e0e5 50%, #f0f1f5 75%);
     background-size: 200% 100%;
   }
 
