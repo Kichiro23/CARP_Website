@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { MapPin, RefreshCw, Navigation } from 'lucide-react';
+import { MapPin, RefreshCw, Navigation, X } from 'lucide-react';
 import { fetchWeather, fetchPM25, wmoEmoji, wmoLabel, aqiColor } from '@/services/weatherApi';
+import CitySearch from '@/components/CitySearch';
 import type { SavedLocation } from '@/hooks/useLocation';
 import type { WeatherData } from '@/types';
 import L from 'leaflet';
@@ -30,9 +31,17 @@ const MAJOR_CITIES = [
   'Singapore', 'Dubai, UAE', 'Sydney, Australia', 'Paris, France',
   'Berlin, Germany', 'Mumbai, India', 'Beijing, China', 'Seoul, South Korea',
   'Bangkok, Thailand', 'Jakarta, Indonesia', 'Cairo, Egypt', 'Nairobi, Kenya',
+  'Los Angeles, USA', 'Toronto, Canada', 'Mexico City, Mexico', 'Sao Paulo, Brazil',
+  'Buenos Aires, Argentina', 'Moscow, Russia', 'Istanbul, Turkey', 'Rome, Italy',
+  'Madrid, Spain', 'Amsterdam, Netherlands', 'Vienna, Austria', 'Warsaw, Poland',
+  'Lagos, Nigeria', 'Cape Town, South Africa', 'Riyadh, Saudi Arabia', 'Tehran, Iran',
+  'Karachi, Pakistan', 'Dhaka, Bangladesh', 'Hanoi, Vietnam', 'Taipei, Taiwan',
+  'Hong Kong', 'Kuala Lumpur, Malaysia', 'Melbourne, Australia', 'Auckland, New Zealand',
 ];
 
-interface CityMarker { name: string; lat: number; lng: number; weather: WeatherData | null; pm25: number | null; }
+const STORAGE_KEY = 'carp_map_cities';
+
+interface CityMarker { name: string; lat: number; lng: number; weather: WeatherData | null; pm25: number | null; isCustom?: boolean; }
 
 interface Props { current: SavedLocation; }
 
@@ -43,23 +52,58 @@ export default function LiveMap({ current }: Props) {
 
   useEffect(() => { setCenter([current.lat, current.lng]); }, [current.lat, current.lng]);
 
+  const getCustomCities = (): string[] => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+  };
+  const saveCustomCities = (cities: string[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cities));
+  };
+
+  const loadCity = async (cityName: string, isCustom = false): Promise<CityMarker | null> => {
+    try {
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`);
+      const geoData = await geoRes.json();
+      if (!geoData.results?.[0]) return null;
+      const r = geoData.results[0];
+      const [w, pm25] = await Promise.all([fetchWeather(r.latitude, r.longitude), fetchPM25(r.latitude, r.longitude)]);
+      return { name: r.name, lat: r.latitude, lng: r.longitude, weather: w, pm25, isCustom };
+    } catch { return null; }
+  };
+
   const load = async () => {
     setLoading(true);
+    const custom = getCustomCities();
+    const allCities = [...MAJOR_CITIES, ...custom];
     const results: CityMarker[] = [];
-    await Promise.all(MAJOR_CITIES.map(async (city) => {
-      try {
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
-        const geoData = await geoRes.json();
-        if (!geoData.results?.[0]) return;
-        const r = geoData.results[0];
-        const [w, pm25] = await Promise.all([fetchWeather(r.latitude, r.longitude), fetchPM25(r.latitude, r.longitude)]);
-        results.push({ name: r.name, lat: r.latitude, lng: r.longitude, weather: w, pm25 });
-      } catch {}
+    await Promise.all(allCities.map(async (city) => {
+      const marker = await loadCity(city, custom.includes(city));
+      if (marker) results.push(marker);
     }));
     setMarkers(results);
     setLoading(false);
   };
+
   useEffect(() => { load(); }, []);
+
+  const handleSearchSelect = async (city: { name: string; country: string; lat: number; lng: number }) => {
+    const cityLabel = `${city.name}, ${city.country}`;
+    const custom = getCustomCities();
+    if (custom.includes(cityLabel) || markers.some(m => m.name === city.name)) return;
+
+    const marker = await loadCity(cityLabel, true);
+    if (marker) {
+      setMarkers(prev => [...prev, marker]);
+      saveCustomCities([...custom, cityLabel]);
+      setCenter([city.lat, city.lng]);
+    }
+  };
+
+  const removeCustomCity = (name: string) => {
+    const custom = getCustomCities();
+    const updated = custom.filter(c => !c.startsWith(name));
+    saveCustomCities(updated);
+    setMarkers(prev => prev.filter(m => !(m.isCustom && m.name === name)));
+  };
 
   const locateMe = () => {
     if (navigator.geolocation) {
@@ -80,10 +124,15 @@ export default function LiveMap({ current }: Props) {
             <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> {loading ? 'Loading...' : 'Refresh'}</button>
           </div>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          {['Good', 'Moderate', 'Unhealthy(S)', 'Unhealthy', 'Hazardous'].map((l, i) => (
-            <div key={l} className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full" style={{ background: aqiMarkerColors[i] }} /><span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{l}</span></div>
-          ))}
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="sm:w-72">
+            <CitySearch onSelect={handleSearchSelect} placeholder="Search any city or country..." />
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {['Good', 'Moderate', 'Unhealthy(S)', 'Unhealthy', 'Hazardous'].map((l, i) => (
+              <div key={l} className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full" style={{ background: aqiMarkerColors[i] }} /><span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{l}</span></div>
+            ))}
+          </div>
         </div>
       </div>
       <div className="flex-1 mx-4 md:mx-6 mb-4 md:mb-6 min-h-[400px] rounded-xl overflow-hidden border" style={{ borderColor: 'var(--tile-border)' }}>
@@ -97,10 +146,17 @@ export default function LiveMap({ current }: Props) {
             <Popup><div className="min-w-[120px]"><p className="text-xs font-bold" style={{ color: '#EAEFEF' }}>{current.name}</p><p className="text-[10px]" style={{ color: '#9a9da8' }}>Your selected location</p></div></Popup>
           </Marker>
           {markers.map(m => (
-            <Marker key={m.name} position={[m.lat, m.lng]} icon={createMarkerIcon(m.pm25)}>
+            <Marker key={`${m.name}-${m.lat}`} position={[m.lat, m.lng]} icon={createMarkerIcon(m.pm25)}>
               <Popup>
                 <div className="min-w-[140px]">
-                  <h4 className="text-xs font-bold mb-1" style={{ color: '#EAEFEF' }}>{m.name}</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold mb-1" style={{ color: '#EAEFEF' }}>{m.name}</h4>
+                    {m.isCustom && (
+                      <button onClick={() => removeCustomCity(m.name)} className="ml-2 rounded p-0.5 hover:bg-white/10" title="Remove">
+                        <X className="h-3 w-3" style={{ color: '#9a9da8' }} />
+                      </button>
+                    )}
+                  </div>
                   {m.weather ? (
                     <div className="space-y-0.5">
                       <p className="text-[11px]" style={{ color: '#9a9da8' }}>{wmoEmoji(m.weather.current.weatherCode)} {m.weather.current.temperature}C | {m.weather.current.humidity}%</p>
