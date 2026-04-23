@@ -101,7 +101,7 @@ export default function Analytics({ current }: Props) {
   const avgMin = Math.round(temps.reduce((a, b) => a + b.minTemp, 0) / temps.length);
   const highest = Math.max(...temps.map(t => t.maxTemp));
   const lowest = Math.min(...temps.map(t => t.minTemp));
-  const tempRange = highest - lowest;
+  const tempRange = Math.round((highest - lowest) * 10) / 10;
 
   return (
     <div className="space-y-4">
