@@ -11,7 +11,7 @@ interface ChatMessage {
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 const OPENAI_BASE_URL = import.meta.env.VITE_OPENAI_BASE_URL || 'https://api.openai.com/v1';
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
 const HAS_AI_KEY = !!(GEMINI_API_KEY || OPENAI_API_KEY || OPENROUTER_API_KEY);
@@ -691,18 +691,24 @@ export default function ChatAgent() {
       setContextTopic(null); // Clear context when AI handles it
     } catch (err: any) {
       const msg = err.message || '';
+      console.error('CARP AI API Error:', msg);
 
       if (isQuotaError(msg)) {
         const result = getRuleBasedResponse(userText, contextTopic);
         addModelMsg(result.text, true);
         setContextTopic(result.topic);
         setWarn('CARP AI is in offline mode (API quota exceeded). Answers are rule-based but still helpful!');
+      } else if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
+        const result = getRuleBasedResponse(userText, contextTopic);
+        addModelMsg(result.text, true);
+        setContextTopic(result.topic);
+        setWarn('API key invalid or expired. Check your key at openrouter.ai/keys');
       } else {
         // Network or other errors → fallback too
         const result = getRuleBasedResponse(userText, contextTopic);
         addModelMsg(result.text, true);
         setContextTopic(result.topic);
-        setWarn('CARP AI is in offline mode (connection issue). Answers are rule-based but still helpful!');
+        setWarn('CARP AI is in offline mode (' + msg + '). Answers are rule-based but still helpful!');
       }
     } finally {
       setLoading(false);
