@@ -11,9 +11,12 @@ interface ChatMessage {
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 const OPENAI_BASE_URL = import.meta.env.VITE_OPENAI_BASE_URL || 'https://api.openai.com/v1';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 
-const HAS_AI_KEY = !!(GEMINI_API_KEY || OPENAI_API_KEY);
-const USE_OPENAI = !!OPENAI_API_KEY;
+const HAS_AI_KEY = !!(GEMINI_API_KEY || OPENAI_API_KEY || OPENROUTER_API_KEY);
+const USE_OPENROUTER = !!OPENROUTER_API_KEY;
+const USE_OPENAI = !!OPENAI_API_KEY && !USE_OPENROUTER;
 
 /* ─────────── System Prompt ─────────── */
 
@@ -556,21 +559,36 @@ function isQuotaError(msg: string): boolean {
 
 /* ─────────── AI API Calls ─────────── */
 
-async function callOpenAI(history: { role: string; text: string }[], userText: string): Promise<string> {
+async function callOpenAICompatible(
+  history: { role: string; text: string }[],
+  userText: string,
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  providerName: string
+): Promise<string> {
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...history.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
     { role: 'user', content: userText },
   ];
 
-  const res = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`,
+  };
+
+  // OpenRouter-specific headers for better routing
+  if (providerName === 'OpenRouter') {
+    headers['HTTP-Referer'] = window.location.origin;
+    headers['X-Title'] = 'CARP AI';
+  }
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    },
+    headers,
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
+      model,
       messages,
       temperature: 0.7,
       max_tokens: 500,
@@ -579,7 +597,7 @@ async function callOpenAI(history: { role: string; text: string }[], userText: s
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `OpenAI error ${res.status}`);
+    throw new Error(err.error?.message || `${providerName} error ${res.status}`);
   }
 
   const data = await res.json();
@@ -661,8 +679,10 @@ export default function ChatAgent() {
     try {
       let reply: string;
 
-      if (USE_OPENAI) {
-        reply = await callOpenAI(history, userText);
+      if (USE_OPENROUTER) {
+        reply = await callOpenAICompatible(history, userText, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, 'openai/gpt-3.5-turbo', 'OpenRouter');
+      } else if (USE_OPENAI) {
+        reply = await callOpenAICompatible(history, userText, OPENAI_API_KEY, OPENAI_BASE_URL, 'gpt-3.5-turbo', 'OpenAI');
       } else {
         reply = await callGemini(history, userText);
       }
@@ -765,7 +785,7 @@ export default function ChatAgent() {
                   <Bot className="h-3.5 w-3.5 text-white" />
                 </div>
                 <div className="rounded-xl px-3 py-2 text-xs" style={{ background: 'var(--tile-bg)', border: '1px solid var(--tile-border)', color: 'var(--text-muted)' }}>
-                  {USE_OPENAI ? 'Thinking with ChatGPT...' : 'Thinking...'}
+                  {USE_OPENROUTER ? 'Thinking via OpenRouter...' : USE_OPENAI ? 'Thinking with ChatGPT...' : 'Thinking...'}
                 </div>
               </div>
             )}
