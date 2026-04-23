@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, MapPin, AlertTriangle, Activity, Wind } from 'lucide-react';
+import { RefreshCw, MapPin, AlertTriangle, Activity, Wind, HelpCircle } from 'lucide-react';
 import { fetchAirQuality, fetchWeather, aqiColor, pm25Class } from '@/services/weatherApi';
 import { Line } from 'react-chartjs-2';
 import type { SavedLocation } from '@/hooks/useLocation';
@@ -15,12 +15,12 @@ export default function AirQuality({ current }: Props) {
   const load = async () => {
     setLoading(true); setError('');
     try {
-      const [aq, w] = await Promise.all([
+      const [aq, r] = await Promise.all([
         fetchAirQuality(current.lat, current.lng),
         fetchWeather(current.lat, current.lng),
       ]);
       setData(aq);
-      setWeather(w ? { hourly: w.hourly } : null);
+      setWeather(r ? { hourly: r.hourly } : null);
       if (!aq) setError('Could not load air quality data.');
     } catch { setError('Failed to load data.'); }
     setLoading(false);
@@ -57,13 +57,15 @@ export default function AirQuality({ current }: Props) {
   );
 
   const pollutants = [
-    { label: 'PM2.5', value: data.pm25, unit: 'ug/m3', desc: 'Fine particles - most harmful to health', color: aqiColor(data.pm25) },
-    { label: 'PM10', value: data.pm10, unit: 'ug/m3', desc: 'Coarse particles', color: '#A2B7C7' },
-    { label: 'CO', value: data.co, unit: 'ug/m3', desc: 'Carbon monoxide', color: '#A2B7C7' },
-    { label: 'NO2', value: data.no2, unit: 'ug/m3', desc: 'Nitrogen dioxide', color: '#A2B7C7' },
-    { label: 'O3', value: data.o3, unit: 'ug/m3', desc: 'Ozone', color: '#A2B7C7' },
-    { label: 'SO2', value: data.so2, unit: 'ug/m3', desc: 'Sulphur dioxide', color: '#A2B7C7' },
+    { label: 'PM2.5', value: data.pm25, unit: 'ug/m3', desc: 'Fine particles (<2.5nm). Penetrates deep into lungs. Major health risk.', color: aqiColor(data.pm25), badge: pm25Class(data.pm25) },
+    { label: 'PM10', value: data.pm10, unit: 'ug/m3', desc: 'Coarse particles (<10nm). Can irritate eyes and throat.', color: '#A2B7C7', badge: null },
+    { label: 'CO', value: data.co, unit: 'mg/m3', desc: 'Carbon monoxide. Toxic gas from burning fuel. Can cause headaches and dizziness.', color: '#A2B7C7', badge: null },
+    { label: 'NO2', value: data.no2, unit: 'ug/m3', desc: 'Nitrogen dioxide. From vehicle exhaust and industry. Can irritate airways.', color: '#A2B7C7', badge: null },
+    { label: 'O3', value: data.o3, unit: 'ug/m3', desc: 'Ozone. Ground-level ozone is harmful. Can trigger asthma and lung damage.', color: '#A2B7C7', badge: null },
+    { label: 'SO2', value: data.so2, unit: 'ug/m3', desc: 'Sulfur dioxide. From fossil fuel burning. Can cause respiratory issues.', color: '#A2B7C7', badge: null },
   ];
+
+  const aqiC = aqiColor(data.pm25);
 
   return (
     <div className="space-y-4">
@@ -75,15 +77,15 @@ export default function AirQuality({ current }: Props) {
         <button onClick={load} className="glass-badge cursor-pointer"><RefreshCw className="mr-1 h-3 w-3" style={{ color: 'var(--primary)' }} /> Refresh</button>
       </div>
 
-      <div className="tile text-center" style={{ background: `linear-gradient(135deg, ${aqiColor(data.pm25)}10, transparent)` }}>
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full" style={{ background: `${aqiColor(data.pm25)}20`, border: `3px solid ${aqiColor(data.pm25)}` }}>
-          <Activity className="h-8 w-8" style={{ color: aqiColor(data.pm25) }} />
+      <div className="tile text-center" style={{ background: 'linear-gradient(135deg, ' + aqiC + '10, transparent)' }}>
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full" style={{ background: aqiC + '20', border: '3px solid ' + aqiC }}>
+          <Activity className="h-8 w-8" style={{ color: aqiC }} />
         </div>
-        <p className="text-5xl font-extrabold" style={{ color: aqiColor(data.pm25) }}>{data.aqi}</p>
+        <p className="text-5xl font-extrabold" style={{ color: aqiC }}>{data.aqi}</p>
         <p className="mt-1 text-base font-bold" style={{ color: 'var(--text)' }}>{aqiLabels[Math.min(data.aqi - 1, 4)] || 'Unknown'}</p>
         <p className="mt-1 max-w-md mx-auto text-xs" style={{ color: 'var(--text-secondary)' }}>{aqiDesc[Math.min(data.aqi - 1, 4)] || ''}</p>
         <div className="mt-3 flex justify-center gap-1.5">
-          {[1,2,3,4,5].map(i => <div key={i} className="h-2.5 w-10 rounded-full" style={{ background: i <= data.aqi ? aqiColor(data.pm25) : 'rgba(255,255,255,0.06)' }} />)}
+          {[1,2,3,4,5].map(i => <div key={i} className="h-2.5 w-10 rounded-full" style={{ background: i <= data.aqi ? aqiC : 'rgba(255,255,255,0.06)' }} />)}
         </div>
       </div>
 
@@ -91,17 +93,20 @@ export default function AirQuality({ current }: Props) {
         {pollutants.map(p => (
           <div key={p.label} className="tile">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>{p.label}</p>
-              <p className="text-sm font-bold" style={{ color: p.color }}>{Math.round(p.value)}</p>
+              <span className="text-xs font-bold" style={{ color: 'var(--text)' }}>{p.label}</span>
+              {p.badge && <span className={'rounded-md px-2 py-0.5 text-[10px] font-bold ' + p.badge}>
+                {p.value <= 12 ? 'Good' : p.value <= 35 ? 'Moderate' : p.value <= 55 ? 'Unhealthy' : 'Hazardous'}
+              </span>}
             </div>
-            <p className="text-[10px] mb-2" style={{ color: 'var(--text-muted)' }}>{p.unit} - {p.desc}</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-3xl font-extrabold" style={{ color: p.color }}>{Math.round(p.value * 10) / 10}</p>
+              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{p.unit}</span>
+            </div>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{p.desc}</p>
             {p.label === 'PM2.5' && (
-              <div>
-                <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${pm25Class(p.value)}`}>
-                  {p.value <= 12 ? 'Good' : p.value <= 35 ? 'Moderate' : p.value <= 55 ? 'Unhealthy' : 'Hazardous'}
-                </span>
-                <div className="mt-2 h-2 w-full rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                  <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (p.value / 150) * 100)}%`, background: aqiColor(p.value) }} />
+              <div className="mt-3">
+                <div className="h-2 w-full rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="h-2 rounded-full transition-all" style={{ width: Math.min(100, (p.value / 150) * 100) + '%', background: aqiColor(p.value) }} />
                 </div>
               </div>
             )}
@@ -120,12 +125,13 @@ export default function AirQuality({ current }: Props) {
       )}
 
       <div className="tile">
-        <h3 className="tile-title">Health Recommendations</h3>
-        {data.aqi <= 1 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Great day for outdoor activities! Air quality is ideal for everyone. Open windows for fresh air.</p>}
-        {data.aqi === 2 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sensitive individuals should reduce prolonged outdoor exertion. General public can continue normal activities.</p>}
-        {data.aqi === 3 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Everyone should limit prolonged outdoor activities. Consider wearing a mask outdoors. Keep windows closed.</p>}
-        {data.aqi >= 4 && <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Avoid outdoor activities. Keep windows closed and use air purifiers indoors. Wear N95 masks if going outside is necessary.</p>}
-        <p className="mt-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>Data from Open-Meteo Air Quality API. Updated in real-time for {current.name}.</p>
+        <h3 className="tile-title flex items-center gap-2"><HelpCircle className="h-4 w-4" /> Understanding Air Quality Units</h3>
+        <div className="space-y-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <p><strong style={{ color: 'var(--text)' }}>PM2.5 &amp; PM10 (ug/m3):</strong> Micrograms per cubic meter. Smaller than 2.5nm (PM2.5) or 10nm (PM10). Since they are so small, they can enter the bloodstream and cause cardiovascular and respiratory problems.</p>
+          <p><strong style={{ color: 'var(--text)' }}>CO (mg/m3):</strong> Milligrams per cubic meter. Carbon monoxide is a toxic gas with no color or smell. High levels reduce oxygen delivery in the blood.</p>
+          <p><strong style={{ color: 'var(--text)' }}>NO2, O3, SO2 (ug/m3):</strong> Micrograms per cubic meter. Nitrogen dioxide, ozone, and sulfur dioxide are gases that can irritate airways, harm lungs, and cause respiratory distress.</p>
+          <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>Data from Open-Meteo Air Quality API. Updated in real-time for {current.name}.</p>
+        </div>
       </div>
     </div>
   );

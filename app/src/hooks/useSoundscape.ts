@@ -12,7 +12,7 @@ function getAudioContext(): AudioContext {
   return globalAudioCtx;
 }
 
-// Generate white noise buffer
+// Generate noise buffer
 function createNoiseBuffer(ctx: AudioContext, type: 'white' | 'pink' | 'brown' = 'white'): AudioBuffer {
   const bufferSize = ctx.sampleRate * 2; // 2 seconds
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -22,10 +22,8 @@ function createNoiseBuffer(ctx: AudioContext, type: 'white' | 'pink' | 'brown' =
     if (type === 'white') {
       data[i] = white;
     } else if (type === 'pink') {
-      // Simple pink noise approximation
       data[i] = (white + (data[i - 1] || 0)) / 2;
     } else {
-      // Brown noise
       data[i] = (white + (data[i - 1] || 0) * 0.96) / 2;
     }
   }
@@ -36,6 +34,32 @@ interface SoundNode {
   ctx: AudioContext;
   gain: GainNode;
   sources: AudioBufferSourceNode[];
+}
+
+function createCrackleBurst(ctx: AudioContext, gain: GainNode, delay: number): AudioBufferSourceNode {
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < buffer.length; i++) {
+    // Sharp burst: loud at start, decay quickly
+    const t = i / buffer.length;
+    data[i] = (Math.random() * 2 - 1) * (1 - t) * (1 - t) * 0.6;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(gain);
+  source.start(ctx.currentTime + delay);
+  source.onended = () => {
+    try { source.disconnect(); } catch { }
+  };
+  return source;
+}
+
+function scheduleCrackles(ctx: AudioContext, gain: GainNode): number {
+  const interval = setInterval(() => {
+    const delay = Math.random() * 0.5 + 0.05;
+    createCrackleBurst(ctx, gain, delay);
+  }, 150 + Math.random() * 400);
+  return interval;
 }
 
 const soundEngines: Record<string, () => SoundNode> = {
@@ -68,7 +92,6 @@ const soundEngines: Record<string, () => SoundNode> = {
     filter.type = 'bandpass';
     filter.frequency.value = 400;
     filter.Q.value = 0.5;
-    // LFO for wind gusts
     const lfo = ctx.createOscillator();
     lfo.type = 'sine';
     lfo.frequency.value = 0.1;
@@ -94,7 +117,6 @@ const soundEngines: Record<string, () => SoundNode> = {
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.value = 300;
-    // Periodic gating for wave rhythm
     const lfo = ctx.createOscillator();
     lfo.type = 'sine';
     lfo.frequency.value = 0.15;
@@ -113,38 +135,26 @@ const soundEngines: Record<string, () => SoundNode> = {
     const ctx = getAudioContext();
     const gain = ctx.createGain();
     gain.gain.value = 0.2;
+    // Base rumble: brown noise
     const buffer = createNoiseBuffer(ctx, 'brown');
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 1200;
-    // Crackle: high frequency bursts
-    const crackleGain = ctx.createGain();
-    crackleGain.gain.value = 0.15;
-    const crackleBuffer = createNoiseBuffer(ctx, 'white');
-    const crackle = ctx.createBufferSource();
-    crackle.buffer = crackleBuffer;
-    crackle.loop = true;
-    const crackleFilter = ctx.createBiquadFilter();
-    crackleFilter.type = 'highpass';
-    crackleFilter.frequency.value = 3000;
-    crackle.connect(crackleFilter);
-    crackleFilter.connect(crackleGain);
-    crackleGain.connect(gain);
+    filter.frequency.value = 600;
     source.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     source.start();
-    crackle.start();
-    return { ctx, gain, sources: [source, crackle] };
+    // Crackle scheduler
+    const interval = scheduleCrackles(ctx, gain);
+    return { ctx, gain, sources: [source, { stop: () => clearInterval(interval) } as any] };
   },
   forest: () => {
     const ctx = getAudioContext();
     const gain = ctx.createGain();
     gain.gain.value = 0.25;
-    // Stream noise
     const buffer = createNoiseBuffer(ctx, 'pink');
     const source = ctx.createBufferSource();
     source.buffer = buffer;
@@ -157,16 +167,24 @@ const soundEngines: Record<string, () => SoundNode> = {
     filter.connect(gain);
     gain.connect(ctx.destination);
     source.start();
-    // Bird chirps
+    // Bird chirps: random intervals
     const birdGain = ctx.createGain();
     birdGain.gain.value = 0.05;
     const birdOsc = ctx.createOscillator();
-    birdOsc.type = 'sine';
+    birdOsc.type = 'triangle';
     birdOsc.frequency.value = 3000;
+    const birdLfo = ctx.createOscillator();
+    birdLfo.type = 'sine';
+    birdLfo.frequency.value = 3;
+    const birdLfoGain = ctx.createGain();
+    birdLfoGain.gain.value = 1500;
+    birdLfo.connect(birdLfoGain);
+    birdLfoGain.connect(birdOsc.frequency);
+    birdLfo.start();
     birdOsc.connect(birdGain);
     birdGain.connect(gain);
     birdOsc.start();
-    return { ctx, gain, sources: [source, birdOsc as any] };
+    return { ctx, gain, sources: [source, birdOsc as any, birdLfo as any] };
   },
 };
 
