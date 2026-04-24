@@ -235,6 +235,7 @@ export default function Analytics({ current }: Props) {
           {weather.daily.slice(0, 7).map((d, i) => (
             <div key={i} className="rounded-xl border p-3 text-center" style={{ borderColor: 'var(--tile-border)', background: 'rgba(255,255,255,0.02)' }}>
               <p className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>{new Date(d.time).toLocaleDateString('en', { weekday: 'short' })}</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{new Date(d.time).toLocaleDateString('en', { month: 'short', day: 'numeric' })}</p>
               <p className="my-1 text-xl" style={{ minHeight: '2.5rem' }}>{wmoEmoji(d.weatherCode)}</p>
               <p className="text-xs font-bold" style={{ color: 'var(--text)' }}>{d.maxTemp}C / {d.minTemp}C</p>
               <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{wmoDescription(d.weatherCode)}</p>

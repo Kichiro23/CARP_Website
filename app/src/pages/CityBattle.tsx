@@ -164,7 +164,7 @@ export default function CityBattle() {
       <div className="tile">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <select value={selected1.name} onChange={e => setSelected1(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-input mb-3 text-sm">
+            <select value={selected1.name} onChange={e => setSelected1(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-select mb-3 text-sm">
               {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
             {w1 ? (
@@ -176,7 +176,7 @@ export default function CityBattle() {
             ) : <div className="skeleton h-20 w-full" />}
           </div>
           <div>
-            <select value={selected2.name} onChange={e => setSelected2(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-input mb-3 text-sm">
+            <select value={selected2.name} onChange={e => setSelected2(CITIES.find(c => c.name === e.target.value)!)} className="w-full glass-select mb-3 text-sm">
               {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
             </select>
             {w2 ? (

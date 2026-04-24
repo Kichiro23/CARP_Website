@@ -400,6 +400,7 @@ export default function Dashboard({ current, locations, selectLocation, addLocat
             return (
               <div key={i} className="tile !p-3 text-center">
                 <p className="text-[10px] font-bold" style={{ color: 'var(--primary)' }}>{DAYS[date.getDay()]}</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{date.toLocaleDateString('en', { month: 'short', day: 'numeric' })}</p>
                 <p className="my-1 text-2xl">{wmoEmoji(d.weatherCode)}</p>
                 <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{d.maxTemp}C</p>
                 <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{d.minTemp}C low &middot; {d.precipitationProbability}% rain</p>
